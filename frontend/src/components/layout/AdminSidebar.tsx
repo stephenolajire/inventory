@@ -22,7 +22,8 @@ import {
   Bell,
   Store,
   Barcode,
-  FileText
+  FileText,
+  Package,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────
@@ -71,6 +72,12 @@ const NAV_GROUPS: NavGroup[] = [
         href: ROUTES.ADMIN_SCANNERS,
         icon: <Barcode size={18} />,
       },
+      {
+        label: "Products",
+        href: ROUTES.ADMIN_PRODUCT,
+        icon: <Package size={18} />,
+      }
+    
     ],
   },
   {

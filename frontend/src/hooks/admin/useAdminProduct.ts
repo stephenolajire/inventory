@@ -114,7 +114,7 @@ const adminProductsApi = {
     if (filters?.ordering)  params.ordering  = filters.ordering;
     if (filters?.page)      params.page      = filters.page;
     return apiGet<PaginatedResponse<ProductListItem>>(
-      `${BASE}/`,
+      `${BASE}/all`,
       { params }
     );
   },

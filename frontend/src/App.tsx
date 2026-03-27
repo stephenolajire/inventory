@@ -33,6 +33,7 @@ import AdminSubscriptionsPage from "./pages/admin/pages/AdminSubscriptionPage";
 import ReportDownloadPage from "./pages/vendor/pages/ReportDownloadPage";
 import AdminReportsPage from "./pages/admin/pages/AdminReportsPage";
 import AdminNotificationsPage from "./pages/admin/pages/AdminNotificationsPage";
+import AdminProductsPage from "./pages/admin/pages/AdminProductPage";
 
 function App() {
   return (
@@ -78,7 +79,7 @@ function App() {
             <Route path="notifications" element={<AdminNotificationsPage />} />
             <Route path="settings" element={<SettingsPage />} />
             <Route path="subscriptions" element={<AdminSubscriptionsPage />} />
-            <Route path="products/new" element={<NewProductPage />} />
+            <Route path="products" element={<AdminProductsPage />} />
             <Route path="products/:id/edit" element={<EditProductPage />} />
           </Route>
         </Routes>
