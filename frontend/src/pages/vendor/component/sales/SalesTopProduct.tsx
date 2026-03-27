@@ -1,0 +1,77 @@
+// src/pages/vendor/sales/components/SalesTopProducts.tsx
+
+import { formatCurrency, formatNumber } from "../../../../lib/utils";
+import type { SaleByProduct } from "../../../../types";
+
+interface SalesTopProductsProps {
+  data: SaleByProduct[];
+  isLoading: boolean;
+}
+
+export function SalesTopProducts({ data, isLoading }: SalesTopProductsProps) {
+  if (isLoading) {
+    return (
+      <div className="bg-bg-surface rounded-2xl border border-border p-5 animate-pulse">
+        <div className="h-4 w-28 bg-bg-muted rounded-full mb-4" />
+        <div className="space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-3">
+              <div className="w-5 h-5 bg-bg-muted rounded-full shrink-0" />
+              <div className="flex-1 h-3 bg-bg-muted rounded-full" />
+              <div className="w-16 h-3 bg-bg-muted rounded-full" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (!data.length) {
+    return (
+      <div className="bg-bg-surface rounded-2xl border border-border p-5 flex items-center justify-center min-h-[160px]">
+        <p className="text-xs text-text-muted">No product data yet</p>
+      </div>
+    );
+  }
+
+  const maxUnits = Math.max(...data.map((p) => p.total_units));
+
+  return (
+    <div className="bg-bg-surface rounded-2xl border border-border p-5">
+      <h3 className="font-heading font-bold text-sm text-text-primary mb-4">
+        Top products
+      </h3>
+
+      <div className="space-y-3">
+        {data.map((product, i) => (
+          <div key={product.product_id ?? i}>
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-xs font-bold text-text-muted w-4 shrink-0">
+                  {i + 1}
+                </span>
+                <span className="text-xs font-medium text-text-primary truncate">
+                  {product.product_name}
+                </span>
+              </div>
+              <div className="flex items-center gap-3 shrink-0 ml-2">
+                <span className="text-xs text-text-muted">
+                  {formatNumber(product.total_units)} units
+                </span>
+                <span className="text-xs font-semibold text-text-primary">
+                  {formatCurrency(product.total_revenue)}
+                </span>
+              </div>
+            </div>
+            <div className="h-1.5 bg-bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full bg-primary rounded-full transition-all duration-700"
+                style={{ width: `${(product.total_units / maxUnits) * 100}%` }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}

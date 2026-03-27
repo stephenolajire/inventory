@@ -1,0 +1,14 @@
+{# templates/emails/notifications/system_notification.html #}
+{% extends "emails/base.html" %}
+{% block content %}
+  <h1>{{ title }}</h1>
+  <p>Hi {% if first_name %}{{ first_name }}{% else %}there{% endif %},</p>
+  <p>{{ message }}</p>
+  <div class="divider"></div>
+  <div class="note">
+    You can manage your notification preferences in your
+    <a href="{{ platform_url }}/notifications/settings" style="color:#0F6E56;">
+      account settings
+    </a>.
+  </div>
+{% endblock %}

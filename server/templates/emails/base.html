@@ -1,0 +1,47 @@
+{# templates/emails/base.html #}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{{ subject|default:"StockSense" }}</title>
+  <style>
+    body      { margin:0; padding:0; background:#f4f4f0; font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; color:#1a1a1a; }
+    .wrapper  { max-width:600px; margin:40px auto; background:#ffffff; border-radius:10px; overflow:hidden; box-shadow:0 2px 12px rgba(0,0,0,0.08); }
+    .header   { background:#061F18; padding:28px 36px; }
+    .logo     { font-size:22px; font-weight:800; color:#C9A84C; letter-spacing:-0.5px; }
+    .logo span{ color:#ffffff; }
+    .body     { padding:36px 36px 28px; }
+    .footer   { background:#f9f8f5; padding:20px 36px; border-top:1px solid #e8e6e0; }
+    .footer p { font-size:11px; color:#9a9a94; margin:4px 0; line-height:1.6; }
+    h1        { font-size:22px; font-weight:700; color:#1a1a1a; margin:0 0 14px; line-height:1.3; }
+    p         { font-size:15px; color:#3d3d3a; line-height:1.7; margin:0 0 16px; }
+    .btn      { display:inline-block; background:#0F6E56; color:#ffffff !important; text-decoration:none; padding:13px 28px; border-radius:8px; font-size:15px; font-weight:600; margin:6px 0 20px; }
+    .btn-gold { background:#C9A84C; color:#061F18 !important; }
+    .divider  { height:1px; background:#eeede8; margin:24px 0; }
+    .note     { font-size:13px; color:#7a7a74; background:#f9f8f5; border-radius:6px; padding:14px 16px; }
+    .bold     { font-weight:700; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <div class="logo">Stock<span>Sense</span></div>
+    </div>
+    <div class="body">
+      {% block content %}{% endblock %}
+    </div>
+    <div class="footer">
+      <p>© {{ current_year }} StockSense. All rights reserved.</p>
+      <p>
+        You received this email because you have an account on
+        <a href="{{ platform_url }}" style="color:#0F6E56;">stocksense.app</a>.
+      </p>
+      <p>
+        Need help? Email us at
+        <a href="mailto:{{ support_email }}" style="color:#0F6E56;">{{ support_email }}</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>

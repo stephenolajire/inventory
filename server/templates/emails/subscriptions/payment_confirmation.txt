@@ -1,0 +1,17 @@
+
+{# templates/emails/subscriptions/payment_confirmation.txt #}
+Hi {% if first_name %}{{ first_name }}{% else %}there{% endif %},
+
+Your payment has been received.
+
+Plan:             {{ plan_name }}
+Billing cycle:    {{ billing_cycle }}
+Amount paid:      {{ currency }} {{ amount_paid }}
+Next billing date: {{ next_billing_date }}
+
+Go to your dashboard:
+{{ dashboard_url }}
+
+---
+StockSense — {{ platform_url }}
+Support: {{ support_email }}

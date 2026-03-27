@@ -1,0 +1,13 @@
+{# templates/emails/verification/admin_new_vendor.html #}
+{% extends "emails/base.html" %}
+{% block content %}
+  <h1>New vendor application</h1>
+  <p>Hi {% if admin_name %}{{ admin_name }}{% else %}Admin{% endif %},</p>
+  <p>A new vendor has registered and verified their email address.</p>
+  <table style="width:100%;font-size:14px;border-collapse:collapse;margin-bottom:20px;">
+    <tr><td style="padding:8px 0;color:#7a7a74;width:40%;">Email</td><td class="bold">{{ vendor_email }}</td></tr>
+    <tr><td style="padding:8px 0;color:#7a7a74;">Business name</td><td class="bold">{{ business_name }}</td></tr>
+    <tr><td style="padding:8px 0;color:#7a7a74;">Selected plan</td><td class="bold">{{ plan_name }}</td></tr>
+  </table>
+  <a href="{{ review_url }}" class="btn">Review application →</a>
+{% endblock %}

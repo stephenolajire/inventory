@@ -1,0 +1,16 @@
+
+{# templates/emails/vendors/rejection.txt #}
+Hi {% if first_name %}{{ first_name }}{% else %}there{% endif %},
+
+Thank you for applying to StockSense.
+
+Unfortunately we are unable to approve your account at this time.
+{% if reason %}
+Reason: {{ reason }}
+{% endif %}
+
+If you believe this is a mistake, contact us at:
+{{ support_email }}
+
+---
+StockSense — {{ platform_url }}

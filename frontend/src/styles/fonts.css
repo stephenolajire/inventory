@@ -1,0 +1,40 @@
+/* src/styles/fonts.css */
+
+/* ── Syne — headings ── */
+@font-face {
+  font-family:  "Syne";
+  font-style:   normal;
+  font-weight:  700;
+  font-display: swap;
+  src: url("https://fonts.gstatic.com/s/syne/v22/8vIS7w4qzmVxsWxjBZRjr0FKM_04uQ.woff2") format("woff2");
+}
+@font-face {
+  font-family:  "Syne";
+  font-style:   normal;
+  font-weight:  800;
+  font-display: swap;
+  src: url("https://fonts.gstatic.com/s/syne/v22/8vIS7w4qzmVxsWxjBZRjr0FKM_0uuQ.woff2") format("woff2");
+}
+
+/* ── DM Sans — body ── */
+@font-face {
+  font-family:  "DM Sans";
+  font-style:   normal;
+  font-weight:  300;
+  font-display: swap;
+  src: url("https://fonts.gstatic.com/s/dmsans/v15/rP2tp2ywxg089UriI5-g4vlH9VoD8Cmcqbu6-K.woff2") format("woff2");
+}
+@font-face {
+  font-family:  "DM Sans";
+  font-style:   normal;
+  font-weight:  400;
+  font-display: swap;
+  src: url("https://fonts.gstatic.com/s/dmsans/v15/rP2tp2ywxg089UriI5-g4vlH9VoD8Cmcqbu6-K.woff2") format("woff2");
+}
+@font-face {
+  font-family:  "DM Sans";
+  font-style:   normal;
+  font-weight:  500;
+  font-display: swap;
+  src: url("https://fonts.gstatic.com/s/dmsans/v15/rP2tp2ywxg089UriI5-g4vlH9VoD8Cmcqbu6-K.woff2") format("woff2");
+}

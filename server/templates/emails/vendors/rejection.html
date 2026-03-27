@@ -1,0 +1,21 @@
+{# templates/emails/vendors/rejection.html #}
+{% extends "emails/base.html" %}
+{% block content %}
+  <h1>Application update</h1>
+  <p>Hi {% if first_name %}{{ first_name }}{% else %}there{% endif %},</p>
+  <p>
+    Thank you for applying to StockSense. After reviewing your application,
+    we are unable to approve your account at this time.
+  </p>
+  {% if reason %}
+  <div class="note">
+    <span class="bold">Reason:</span> {{ reason }}
+  </div>
+  {% endif %}
+  <div class="divider"></div>
+  <p>
+    If you believe this is a mistake or would like more information,
+    please contact our support team.
+  </p>
+  <a href="mailto:{{ support_email }}" class="btn">Contact support</a>
+{% endblock %}

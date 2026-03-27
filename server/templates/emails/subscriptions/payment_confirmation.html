@@ -1,0 +1,17 @@
+{# templates/emails/subscriptions/payment_confirmation.html #}
+{% extends "emails/base.html" %}
+{% block content %}
+  <h1>Payment confirmed</h1>
+  <p>Hi {% if first_name %}{{ first_name }}{% else %}there{% endif %},</p>
+  <p>
+    Your payment has been received and your
+    <span class="bold">{{ plan_name }}</span> plan is now active.
+  </p>
+  <table style="width:100%;font-size:14px;border-collapse:collapse;margin-bottom:20px;">
+    <tr><td style="padding:8px 0;color:#7a7a74;width:40%;">Plan</td><td class="bold">{{ plan_name }}</td></tr>
+    <tr><td style="padding:8px 0;color:#7a7a74;">Billing cycle</td><td class="bold">{{ billing_cycle }}</td></tr>
+    <tr><td style="padding:8px 0;color:#7a7a74;">Amount paid</td><td class="bold">{{ currency }} {{ amount_paid }}</td></tr>
+    <tr><td style="padding:8px 0;color:#7a7a74;">Next billing date</td><td class="bold">{{ next_billing_date }}</td></tr>
+  </table>
+  <a href="{{ dashboard_url }}" class="btn btn-gold">Go to dashboard →</a>
+{% endblock %}

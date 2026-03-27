@@ -1,0 +1,20 @@
+{# templates/emails/vendors/approval.html #}
+{% extends "emails/base.html" %}
+{% block content %}
+  <h1>Your account has been approved 🎉</h1>
+  <p>Hi {% if first_name %}{{ first_name }}{% else %}there{% endif %},</p>
+  <p>
+    Congratulations! Your StockSense application has been reviewed
+    and your account has been approved.
+  </p>
+  <p>Your assigned scanner serial number is:</p>
+  <p style="font-size:24px;font-weight:800;letter-spacing:2px;color:#0F6E56;">
+    {{ scanner_serial }}
+  </p>
+  <div class="divider"></div>
+  <p>
+    Log in now to activate your <span class="bold">{{ plan_name }}</span> plan
+    and start adding your products.
+  </p>
+  <a href="{{ login_url }}" class="btn btn-gold">Log in to StockSense →</a>
+{% endblock %}

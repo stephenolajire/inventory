@@ -1,0 +1,16 @@
+
+{# templates/emails/passwords/reset_link.txt #}
+Hi {% if first_name %}{{ first_name }}{% else %}there{% endif %},
+
+We received a request to reset your StockSense password.
+
+Visit this link to reset it:
+{{ reset_url }}
+
+This link expires in {{ expiry_hours }} hours.
+
+If you did not request this, ignore this email — your password will not change.
+
+---
+StockSense — {{ platform_url }}
+Support: {{ support_email }}

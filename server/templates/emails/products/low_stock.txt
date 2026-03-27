@@ -1,0 +1,15 @@
+
+{# templates/emails/products/low_stock.txt #}
+Hi {% if first_name %}{{ first_name }}{% else %}there{% endif %},
+
+Low stock alert: {{ product_name }}
+
+You have {{ quantity_remaining }} unit(s) remaining.
+Consider restocking soon.
+
+View the product:
+{{ product_url }}
+
+---
+StockSense — {{ platform_url }}
+Support: {{ support_email }}

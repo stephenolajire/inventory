@@ -1,0 +1,21 @@
+{# templates/emails/verification/verify_email.html #}
+{% extends "emails/base.html" %}
+{% block content %}
+  <h1>Verify your email address</h1>
+  <p>Hi {% if first_name %}{{ first_name }}{% else %}there{% endif %},</p>
+  <p>
+    Thanks for creating a StockSense account. Click the button below
+    to verify your email address and continue your application.
+  </p>
+  <a href="{{ verify_url }}" class="btn btn-gold">Verify my email →</a>
+  <div class="divider"></div>
+  <div class="note">
+    This link expires in <span class="bold">{{ expiry_hours }} hours</span>.
+    If you did not create a StockSense account, you can safely ignore this email.
+  </div>
+  <div class="divider"></div>
+  <p style="font-size:13px;color:#9a9a94;">
+    If the button above does not work, copy and paste this link into your browser:<br/>
+    <a href="{{ verify_url }}" style="color:#0F6E56;word-break:break-all;">{{ verify_url }}</a>
+  </p>
+{% endblock %}

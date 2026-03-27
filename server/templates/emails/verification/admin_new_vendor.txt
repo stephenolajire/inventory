@@ -1,0 +1,15 @@
+
+{# templates/emails/verification/admin_new_vendor.txt #}
+Hi {% if admin_name %}{{ admin_name }}{% else %}Admin{% endif %},
+
+A new vendor has registered and verified their email.
+
+Email:         {{ vendor_email }}
+Business name: {{ business_name }}
+Selected plan: {{ plan_name }}
+
+Review their application here:
+{{ review_url }}
+
+---
+StockSense — {{ platform_url }}

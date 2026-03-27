@@ -1,0 +1,18 @@
+```
+```
+{# templates/emails/sales/daily_summary.txt #}
+Hi {% if first_name %}{{ first_name }}{% else %}there{% endif %},
+
+Your sales summary for {{ summary_date }}:
+
+Total revenue:  {{ currency }} {{ total_revenue }}
+Total orders:   {{ total_orders }}
+Units sold:     {{ total_units }}
+Top product:    {{ top_product }}
+
+View full analytics:
+{{ analytics_url }}
+
+---
+StockSense — {{ platform_url }}
+Support: {{ support_email }}

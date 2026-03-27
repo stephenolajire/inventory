@@ -1,0 +1,14 @@
+
+{# templates/emails/vendors/approval.txt #}
+Hi {% if first_name %}{{ first_name }}{% else %}there{% endif %},
+
+Your StockSense application has been approved.
+
+Your scanner serial number: {{ scanner_serial }}
+
+Log in to activate your {{ plan_name }} plan:
+{{ login_url }}
+
+---
+StockSense — {{ platform_url }}
+Support: {{ support_email }}

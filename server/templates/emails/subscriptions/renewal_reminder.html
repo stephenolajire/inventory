@@ -1,0 +1,16 @@
+{# templates/emails/subscriptions/renewal_reminder.html #}
+{% extends "emails/base.html" %}
+{% block content %}
+  <h1>Your plan renews in {{ days_remaining }} days</h1>
+  <p>Hi {% if first_name %}{{ first_name }}{% else %}there{% endif %},</p>
+  <p>
+    Your <span class="bold">{{ plan_name }}</span> plan is due to renew on
+    <span class="bold">{{ renewal_date }}</span>.
+  </p>
+  <p>
+    Your payment method on file will be charged automatically.
+    If you need to update your payment details before then,
+    visit your subscription settings.
+  </p>
+  <a href="{{ subscription_url }}" class="btn">Manage subscription →</a>
+{% endblock %}

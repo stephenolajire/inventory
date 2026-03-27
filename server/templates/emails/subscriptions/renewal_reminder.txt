@@ -1,0 +1,13 @@
+{# templates/emails/subscriptions/renewal_reminder.txt #}
+Hi {% if first_name %}{{ first_name }}{% else %}there{% endif %},
+
+Your {{ plan_name }} plan renews on {{ renewal_date }} ({{ days_remaining }} days away).
+
+Your payment method on file will be charged automatically.
+
+To update your payment details:
+{{ subscription_url }}
+
+---
+StockSense — {{ platform_url }}
+Support: {{ support_email }}

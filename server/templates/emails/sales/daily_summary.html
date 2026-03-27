@@ -1,0 +1,13 @@
+{# templates/emails/sales/daily_summary.html #}
+{% extends "emails/base.html" %}
+{% block content %}
+  <h1>Your sales summary for {{ summary_date }}</h1>
+  <p>Hi {% if first_name %}{{ first_name }}{% else %}there{% endif %},</p>
+  <table style="width:100%;font-size:14px;border-collapse:collapse;margin-bottom:20px;">
+    <tr><td style="padding:8px 0;color:#7a7a74;width:50%;">Total revenue</td><td class="bold" style="color:#0F6E56;font-size:18px;">{{ currency }} {{ total_revenue }}</td></tr>
+    <tr><td style="padding:8px 0;color:#7a7a74;">Total orders</td><td class="bold">{{ total_orders }}</td></tr>
+    <tr><td style="padding:8px 0;color:#7a7a74;">Units sold</td><td class="bold">{{ total_units }}</td></tr>
+    <tr><td style="padding:8px 0;color:#7a7a74;">Top product</td><td class="bold">{{ top_product }}</td></tr>
+  </table>
+  <a href="{{ analytics_url }}" class="btn btn-gold">View full analytics →</a>
+{% endblock %}

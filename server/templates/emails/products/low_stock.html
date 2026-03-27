@@ -1,0 +1,13 @@
+{# templates/emails/products/low_stock.html #}
+{% extends "emails/base.html" %}
+{% block content %}
+  <h1>Low stock alert</h1>
+  <p>Hi {% if first_name %}{{ first_name }}{% else %}there{% endif %},</p>
+  <p>
+    <span class="bold">{{ product_name }}</span> is running low.
+    You currently have <span class="bold" style="color:#E24B4A;">
+    {{ quantity_remaining }} unit{{ quantity_remaining|pluralize }}</span> left.
+  </p>
+  <p>Consider restocking soon to avoid running out during a sale.</p>
+  <a href="{{ product_url }}" class="btn">View product →</a>
+{% endblock %}
