@@ -18,7 +18,7 @@ Index strategy:
   VendorSubscription:
     - vendor + status: composite (dashboard: find active plan for vendor)
     - status + current_period_end: composite (Celery Beat renewal check)
-    - stripe_sub_id: db_index (Stripe webhook lookup)
+    - stripe_last_intent_id: db_index (last PaymentIntent lookup)
 
   PendingPlanChange:
     - vendor + status: composite (check if vendor has a pending change)
@@ -49,8 +49,8 @@ class SubscriptionPlan(TimeStampedModel):
     product_limit     = models.PositiveIntegerField(
         help_text=_("Max active products. 0 = unlimited."),
     )
-    monthly_price_ngn = models.DecimalField(max_digits=10, decimal_places=2)
-    yearly_price_ngn  = models.DecimalField(max_digits=10, decimal_places=2)
+    monthly_price_gbp = models.DecimalField(max_digits=10, decimal_places=2)
+    yearly_price_gbp  = models.DecimalField(max_digits=10, decimal_places=2)
     has_analytics     = models.BooleanField(default=False)
     has_reports       = models.BooleanField(default=False)
     has_multi_branch  = models.BooleanField(default=False)
@@ -60,7 +60,7 @@ class SubscriptionPlan(TimeStampedModel):
         db_table            = "subscription_plan"
         verbose_name        = _("Subscription Plan")
         verbose_name_plural = _("Subscription Plans")
-        ordering            = ["monthly_price_ngn"]
+        ordering            = ["monthly_price_gbp"]
 
     def __str__(self) -> str:
         return self.get_name_display()
@@ -73,8 +73,6 @@ class VendorSubscription(TimeStampedModel):
         YEARLY  = "yearly",  _("Yearly")
 
     class Currency(models.TextChoices):
-        NGN = "NGN", _("Nigerian Naira")
-        USD = "USD", _("US Dollar")
         GBP = "GBP", _("British Pound")
 
     class Status(models.TextChoices):
@@ -105,7 +103,7 @@ class VendorSubscription(TimeStampedModel):
     currency = models.CharField(
         max_length=3,
         choices=Currency.choices,
-        default=Currency.NGN,
+        default=Currency.GBP,
     )
     status = models.CharField(
         max_length=20,
@@ -118,11 +116,26 @@ class VendorSubscription(TimeStampedModel):
         decimal_places=2,
         default=0,
     )
-    stripe_sub_id = models.CharField(
+    stripe_last_intent_id = models.CharField(
         max_length=255,
         blank=True,
         db_index=True,
-        help_text=_("Stripe subscription ID for recurring billing."),
+        help_text=_(
+            "Stripe PaymentIntent ID (pi_xxxxx) from the most recent successful "
+            "charge. Not a Stripe Subscription ID — billing is managed manually "
+            "via Celery Beat + PaymentIntents."
+        ),
+    )
+    stripe_customer_id = models.CharField(
+        max_length=255,
+        blank=True,
+        db_index=True,
+        help_text=_("Stripe Customer ID (cus_xxxxx) for recurring billing."),
+    )
+    stripe_payment_method_id = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text=_("Stripe PaymentMethod ID (pm_xxxxx) for auto-renewal."),
     )
     current_period_start = models.DateTimeField(null=True, blank=True)
     current_period_end   = models.DateTimeField(
@@ -248,7 +261,7 @@ class PaymentRecord(TimeStampedModel):
     )
     payment_type   = models.CharField(max_length=20, choices=PaymentType.choices)
     amount         = models.DecimalField(max_digits=12, decimal_places=2)
-    currency       = models.CharField(max_length=3, default="NGN")
+    currency       = models.CharField(max_length=3, default="GBP")
     stripe_intent_id = models.CharField(max_length=255, blank=True, db_index=True)
     billing_cycle  = models.CharField(
         max_length=10,
@@ -269,5 +282,5 @@ class PaymentRecord(TimeStampedModel):
     def __str__(self) -> str:
         return (
             f"{self.vendor.email} — {self.plan.name} "
-            f"₦{self.amount} ({self.payment_type})"
+            f"£{self.amount} ({self.payment_type})"
         )

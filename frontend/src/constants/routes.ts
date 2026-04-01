@@ -21,6 +21,13 @@ export const ROUTES = {
   SUBSCRIPTION: "/dashboard/subscription",
   SETTINGS: "/dashboard/settings",
   SALES: "/dashboard/sales",
+  SUBSCRIPTION_ACTIVATE: "/dashboard/subscription/activate",
+  SUBSCRIPTION_UPGRADE: "/dashboard/subscription/upgrade",
+  SUBSCRIPTION_DOWNGRADE: "/dashboard/subscription/downgrade",
+  SUBSCRIPTION_CANCEL: "/dashboard/subscription/cancel",
+  NEW_PRODUCT: "/dashboard/products/new",
+  EDIT_PRODUCT: "/dashboard/products/:id/edit",
+  DOWNLOAD_REPORT: "/dashboard/reports/:id/download",
 
   // ── Admin ──
   ADMIN_DASHBOARD: "/admin",
@@ -34,5 +41,6 @@ export const ROUTES = {
   ADMIN_NOTIFICATIONS: "/admin/notifications",
   ADMIN_PENDING_VENDORS:"/admin/pending-vendors",
   ADMIN_SETTINGS:"/admin/settings",
-  ADMIN_PRODUCT: "/admin/products"
+  ADMIN_PRODUCT: "/admin/products",
+  ADMIN_VENDOR_ANALYTICS: "/admin/vendors/:id/analytics",
 } as const;

@@ -489,7 +489,7 @@ def _build_pdf(buffer, report, vendor, sales, totals, top_products, payment_brea
                 sale.sold_at.strftime("%d/%m/%y %H:%M"),
                 Paragraph(sale.product_name[:35], body_style),
                 str(sale.quantity),
-                # f"£{float(sale.unit):,.2f}",
+                f"£{float(sale.unit_price):,.2f}",
                 f"£{float(sale.line_total):,.2f}",
                 sale.payment_method.capitalize(),
             ])

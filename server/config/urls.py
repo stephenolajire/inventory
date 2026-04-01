@@ -8,6 +8,7 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
     SpectacularRedocView,
 )
+from subscriptions.webhook import StripeWebhookView
 
 urlpatterns = [
 
@@ -25,7 +26,7 @@ urlpatterns = [
     # ── Auth & Users ──
     path("api/auth/",          include("users.urls")),
     path("api/otp/",      include("otp.urls")),
-    path("api/password/", include("passwords.urls")),
+    path("api/passwords/", include("passwords.urls")),
     path("api/verification/",   include("verification.urls")),
 
     # ── Vendor ──
@@ -34,7 +35,7 @@ urlpatterns = [
 
     # ── Subscription ──
     path("api/subscriptions/", include("subscriptions.urls")),
-     path("api/paypal/",     include("paypal.urls")),
+    #  path("api/paypal/",     include("paypal.urls")),
 
     # ── Products ──
     path("api/products/",      include("products.urls")),
@@ -52,6 +53,8 @@ urlpatterns = [
 
     # ── Geography ──
     path("api/geography/",     include("geography.urls")),
+
+    path("api/stripe/webhook/", StripeWebhookView.as_view(), name="stripe-webhook"),
 
 ]
 

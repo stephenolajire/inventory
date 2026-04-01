@@ -162,12 +162,12 @@ const authApi = {
   forgotPassword: (
     data: ForgotPasswordRequest,
   ): Promise<ApiResponse<{ success: boolean }>> =>
-    apiPost<ApiResponse<{ success: boolean }>>("/auth/password/forgot/", data),
+    apiPost<ApiResponse<{ success: boolean }>>("/passwords/forgot/", data),
 
   resetPassword: (
     data: ResetPasswordRequest,
   ): Promise<ApiResponse<{ success: boolean }>> =>
-    apiPost<ApiResponse<{ success: boolean }>>("/auth/password/reset/", data),
+    apiPost<ApiResponse<{ success: boolean }>>("/passwords/reset/token/", data),
 
   verifyEmail: (token: string): Promise<ApiResponse<{ success: boolean }>> =>
     apiPost<ApiResponse<{ success: boolean }>>("/verification/", { token }),
@@ -175,7 +175,7 @@ const authApi = {
   resendVerification: (
     email: string,
   ): Promise<ApiResponse<{ success: boolean }>> =>
-    apiPost<ApiResponse<{ success: boolean }>>("/auth/verify/resend/", {
+    apiPost<ApiResponse<{ success: boolean }>>("/verification/resend/", {
       email,
     }),
 

@@ -119,7 +119,7 @@ const subscriptionApi = {
     data: SelectPlanRequest
   ): Promise<ApiResponse<ActiveSubscription>> =>
     apiPost<ApiResponse<ActiveSubscription>>(
-      `${BASE}/me/pay/`,
+      `${BASE}/pay/`,
       data
     ),
 
@@ -127,7 +127,7 @@ const subscriptionApi = {
     data: UpgradePlanRequest
   ): Promise<ApiResponse<ActiveSubscription>> =>
     apiPost<ApiResponse<ActiveSubscription>>(
-      `${BASE}/me/upgrade/`,
+      `${BASE}/upgrade/`,
       data
     ),
 
@@ -135,7 +135,7 @@ const subscriptionApi = {
     data: DowngradePlanRequest
   ): Promise<ApiResponse<ActiveSubscription>> =>
     apiPost<ApiResponse<ActiveSubscription>>(
-      `${BASE}/me/downgrade/`,
+      `${BASE}/downgrade/`,
       data
     ),
 
@@ -143,7 +143,7 @@ const subscriptionApi = {
     data: CancelSubscriptionRequest
   ): Promise<ApiResponse<{ success: boolean; message: string }>> =>
     apiPost<ApiResponse<{ success: boolean; message: string }>>(
-      `${BASE}/me/cancel/`,
+      `${BASE}/cancel/`,
       data
     ),
 
@@ -151,7 +151,7 @@ const subscriptionApi = {
     data: ReactivatePayload
   ): Promise<ApiResponse<ActiveSubscription>> =>
     apiPost<ApiResponse<ActiveSubscription>>(
-      `${BASE}/me/reactivate/`,
+      `${BASE}/reactivate/`,
       data
     ),
 
@@ -160,7 +160,7 @@ const subscriptionApi = {
     billing_cycle: string
   ): Promise<ApiResponse<ProrationPreview>> =>
     apiGet<ApiResponse<ProrationPreview>>(
-      `${BASE}/me/proration-preview/`,
+      `${BASE}/proration-preview/`,
       { params: { new_plan, billing_cycle } }
     ),
 };

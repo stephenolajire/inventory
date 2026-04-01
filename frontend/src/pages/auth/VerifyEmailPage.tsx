@@ -3,7 +3,10 @@
 import { useEffect, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { ROUTES } from "../../constants/routes";
-import { useVerifyEmail, useResendVerification } from "../../hooks/auth/useAuth";
+import {
+  useVerifyEmail,
+  useResendVerification,
+} from "../../hooks/auth/useAuth";
 import { getApiErrorMessage } from "../../lib/axios";
 import {
   Zap,
@@ -22,7 +25,6 @@ import {
 function LoadingState() {
   return (
     <div className="flex flex-col items-center text-center">
-      {/* Animated ring */}
       <div className="relative w-20 h-20 mb-7">
         <div className="absolute inset-0 rounded-full border-4 border-border" />
         <div className="absolute inset-0 rounded-full border-4 border-t-primary animate-spin" />
@@ -44,7 +46,6 @@ function LoadingState() {
 function SuccessState() {
   return (
     <div className="flex flex-col items-center text-center">
-      {/* Pulse ring + icon */}
       <div className="relative w-20 h-20 mb-7">
         <div className="absolute inset-0 rounded-full bg-success/10 animate-ping opacity-40" />
         <div className="relative w-20 h-20 rounded-full bg-success/10 border-2 border-success flex items-center justify-center">
@@ -88,7 +89,6 @@ function ErrorState({
 
   return (
     <div className="flex flex-col items-center text-center">
-      {/* Error icon */}
       <div className="w-20 h-20 rounded-full bg-error/10 border-2 border-error flex items-center justify-center mb-7">
         <XCircle size={36} className="text-error" />
       </div>
@@ -103,9 +103,7 @@ function ErrorState({
         The link may have expired or already been used. Request a new one below.
       </p>
 
-      {/* Actions */}
       <div className="w-full space-y-3">
-        {/* Retry same token */}
         <button
           type="button"
           onClick={onRetry}
@@ -125,7 +123,6 @@ function ErrorState({
           )}
         </button>
 
-        {/* Resend — only shown when we have the email hint */}
         {email && (
           <button
             type="button"
@@ -197,44 +194,84 @@ export default function VerifyEmailPage() {
   const token = searchParams.get("token");
   const email = searchParams.get("email");
 
-  // Passing a real no-op onSuccess is the only way to suppress the
-  // hook's built-in navigate(ROUTES.LOGIN) — TanStack Query v5 ignores
-  // onSuccess: undefined and still runs the hook-level handler, which
-  // would navigate away before React can commit the isError state.
-  const verifyEmail = useVerifyEmail({ onSuccess: () => {}, retry: false });
-  const resendVerification = useResendVerification();
+  // Captured error message — covers both real HTTP errors (isError)
+  // and soft failures where apiPost resolves with success: false
+  const errorMessage = useRef<string | null>(null);
+  // True when server responded with success: false (2xx but logical failure)
+  const hasFailed = useRef(false);
 
+  const verifyEmail = useVerifyEmail({
+    onSuccess: (res) => {
+      if (!res.success) {
+        // apiPost resolved but server indicated failure — treat as error
+        errorMessage.current = res.message ?? "Verification failed.";
+        hasFailed.current = true;
+      }
+      // If res.success === true, renderBody will show <SuccessState />
+      // via the isSuccess && !hasFailed check below
+    },
+    onError: (err) => {
+      errorMessage.current = getApiErrorMessage(err);
+    },
+    retry: false,
+  });
+
+  const resendVerification = useResendVerification();
   const hasMutated = useRef(false);
 
   useEffect(() => {
-    if (!token) return;
-    if (hasMutated.current) return;
+    if (!token || hasMutated.current) return;
     hasMutated.current = true;
     verifyEmail.mutate({ token });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [token]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function retry() {
     if (!token) return;
+    hasMutated.current = false;
+    hasFailed.current = false;
+    errorMessage.current = null;
     verifyEmail.reset();
-    verifyEmail.mutate({ token });
+    setTimeout(() => {
+      hasMutated.current = true;
+      verifyEmail.mutate({ token });
+    }, 0);
   }
 
   const renderBody = () => {
     if (!token) return <MissingTokenState />;
-    if (verifyEmail.isPending) return <LoadingState />;
-    if (verifyEmail.isSuccess) return <SuccessState />;
-    if (verifyEmail.isError)
+
+    // Soft failure: 2xx but success: false
+    if (hasFailed.current) {
       return (
         <ErrorState
-          // err.message is the raw Axios string — getApiErrorMessage
-          // extracts the real message from the server response body
-          message={getApiErrorMessage(verifyEmail.error)}
+          message={errorMessage.current ?? "Verification failed."}
           onRetry={retry}
           isRetrying={verifyEmail.isPending}
           email={email}
           resendVerification={resendVerification}
         />
       );
+    }
+
+    // Hard failure: axios threw (4xx/5xx)
+    if (verifyEmail.isError) {
+      return (
+        <ErrorState
+          message={
+            errorMessage.current ?? getApiErrorMessage(verifyEmail.error)
+          }
+          onRetry={retry}
+          isRetrying={verifyEmail.isPending}
+          email={email}
+          resendVerification={resendVerification}
+        />
+      );
+    }
+
+    // Genuine success
+    if (verifyEmail.isSuccess) return <SuccessState />;
+
+    // idle (before effect fires) + pending → spinner
     return <LoadingState />;
   };
 
@@ -270,7 +307,7 @@ export default function VerifyEmailPage() {
       <footer className="px-6 py-4 border-t border-border">
         <p className="text-xs text-center text-text-muted">
           © {new Date().getFullYear()} StockSense Technologies Ltd. · Made with
-          ♥ in Nigeria
+          ♥ in UK
         </p>
       </footer>
     </div>

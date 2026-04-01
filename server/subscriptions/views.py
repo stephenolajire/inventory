@@ -95,13 +95,7 @@ def _calculate_prorated_amount(
     return max(charge_now, Decimal("0.00"))
 
 
-def _period_end_from_cycle(billing_cycle: str) -> timezone.datetime:
-    """
-    Returns the subscription period end date based on the billing cycle.
-    """
-    if billing_cycle == VendorSubscription.BillingCycle.YEARLY:
-        return timezone.now() + timezone.timedelta(days=365)
-    return timezone.now() + timezone.timedelta(days=30)
+from subscriptions.utils import period_end_from_cycle as _period_end_from_cycle
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -125,7 +119,7 @@ class SubscriptionPlanViewSet(
     serializer_class   = SubscriptionPlanListSerializer
     queryset           = SubscriptionPlan.objects.filter(
         is_active=True
-    ).order_by("monthly_price_ngn")
+    ).order_by("monthly_price_gbp")
 
     @extend_schema(
         summary="List all subscription plans (public)",
@@ -221,8 +215,6 @@ class VendorSubscriptionViewSet(GenericViewSet):
 
     # ── Activate paid plan after admin approval ──
 
-    # ── Activate paid plan after admin approval ──
-
     @extend_schema(
         summary="Activate subscription after admin approval",
         request=ProcessPaymentSerializer,
@@ -237,10 +229,7 @@ class VendorSubscriptionViewSet(GenericViewSet):
 
         if not subscription:
             return Response(
-                {
-                    "success": False,
-                    "message": "No subscription found. Please register first.",
-                },
+                {"success": False, "message": "No subscription found. Please register first."},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -256,18 +245,15 @@ class VendorSubscriptionViewSet(GenericViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # ── Free plan: activate directly without payment ──
+        # ── Free plan: activate directly ──
         if subscription.plan.name == SubscriptionPlan.Name.FREE:
             with transaction.atomic():
                 subscription.status               = VendorSubscription.Status.ACTIVE
                 subscription.current_period_start = timezone.now()
                 subscription.current_period_end   = timezone.now() + timezone.timedelta(days=3650)
                 subscription.save(update_fields=[
-                    "status",
-                    "current_period_start",
-                    "current_period_end",
+                    "status", "current_period_start", "current_period_end",
                 ])
-
                 PaymentRecord.objects.create(
                     subscription     = subscription,
                     vendor           = vendor,
@@ -283,13 +269,9 @@ class VendorSubscriptionViewSet(GenericViewSet):
                 vendor            = vendor,
                 notification_type = Notification.NotificationType.SUBSCRIPTION_ACTIVATED,
                 title             = "Free plan activated",
-                message           = (
-                    "Your Free plan is now active. "
-                    "Start adding your products and selling."
-                ),
-                action_url = "/dashboard",
+                message           = "Your Free plan is now active. Start adding your products.",
+                action_url        = "/dashboard",
             )
-
             return Response(
                 {
                     "success": True,
@@ -299,55 +281,64 @@ class VendorSubscriptionViewSet(GenericViewSet):
                 status=status.HTTP_200_OK,
             )
 
-        # ── Paid plan: process via Stripe ──
+        # ── Paid plan ──
         serializer = ProcessPaymentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
         stripe_pm_id = serializer.validated_data["stripe_payment_method_id"]
 
         try:
             import stripe
-            from django.conf import settings
+            from django.conf import settings as django_settings
 
-            stripe.api_key = settings.STRIPE_SECRET_KEY
+            stripe.api_key = django_settings.STRIPE_SECRET_KEY
 
-            # ── Create Stripe customer ──
-            vendor_profile  = getattr(vendor, "vendor_profile", None)
-            stripe_customer = stripe.Customer.create(
-                email    = vendor.email,
-                name     = vendor_profile.business_name if vendor_profile else vendor.email,
-                metadata = {"vendor_id": str(vendor.id)},
-            )
+            vendor_profile = getattr(vendor, "vendor_profile", None)
 
-            # ── Attach payment method ──
-            stripe.PaymentMethod.attach(
-                stripe_pm_id,
-                customer = stripe_customer.id,
-            )
-
-            # ── Determine amount ──
-            if subscription.billing_cycle == VendorSubscription.BillingCycle.YEARLY:
-                amount_decimal = subscription.plan.yearly_price_ngn
+            # ── Reuse existing Stripe customer or create new one ──
+            if subscription.stripe_customer_id:
+                stripe_customer_id = subscription.stripe_customer_id
+                # Attach new pm to existing customer
+                stripe.PaymentMethod.attach(stripe_pm_id, customer=stripe_customer_id)
             else:
-                amount_decimal = subscription.plan.monthly_price_ngn
+                stripe_customer = stripe.Customer.create(
+                    email    = vendor.email,
+                    name     = vendor_profile.business_name if vendor_profile else vendor.email,
+                    metadata = {"vendor_id": str(vendor.id)},
+                )
+                stripe_customer_id = stripe_customer.id
+                stripe.PaymentMethod.attach(stripe_pm_id, customer=stripe_customer_id)
 
-            amount_kobo = int(amount_decimal * 100)
+            # ── Set as default payment method on customer ──
+            stripe.Customer.modify(
+                stripe_customer_id,
+                invoice_settings={"default_payment_method": stripe_pm_id},
+            )
 
-            # ── Create and confirm payment intent ──
+            # ── Determine charge amount ──
+            amount_decimal = (
+                subscription.plan.yearly_price_gbp
+                if subscription.billing_cycle == VendorSubscription.BillingCycle.YEARLY
+                else subscription.plan.monthly_price_gbp
+            )
+            amount_pence = int(amount_decimal * 100)
+
+            # ── Charge ──
             intent = stripe.PaymentIntent.create(
-                amount         = amount_kobo,
+                amount         = amount_pence,
                 currency       = subscription.currency.lower(),
-                customer       = stripe_customer.id,
+                customer       = stripe_customer_id,
                 payment_method = stripe_pm_id,
                 confirm        = True,
-                automatic_payment_methods = {
+                automatic_payment_methods={
                     "enabled":         True,
                     "allow_redirects": "never",
                 },
-                metadata = {
-                    "vendor_id":     str(vendor.id),
-                    "plan":          subscription.plan.name,
-                    "billing_cycle": subscription.billing_cycle,
+                metadata={
+                    "vendor_id":       str(vendor.id),
+                    "plan":            subscription.plan.name,
+                    "billing_cycle":   subscription.billing_cycle,
+                    "type":            "initial",
+                    "subscription_id": str(subscription.id),
                 },
             )
 
@@ -361,18 +352,20 @@ class VendorSubscriptionViewSet(GenericViewSet):
                     status=status.HTTP_402_PAYMENT_REQUIRED,
                 )
 
-            # ── Activate subscription and record payment atomically ──
+            # ── Activate and persist Stripe IDs atomically ──
             with transaction.atomic():
-                subscription.status               = VendorSubscription.Status.ACTIVE
-                subscription.stripe_sub_id        = intent.id
-                subscription.amount_paid          = amount_decimal
-                subscription.current_period_start = timezone.now()
-                subscription.current_period_end   = _period_end_from_cycle(
-                    subscription.billing_cycle
-                )
+                subscription.status                  = VendorSubscription.Status.ACTIVE
+                subscription.stripe_last_intent_id   = intent.id
+                subscription.stripe_customer_id      = stripe_customer_id      # ← NEW
+                subscription.stripe_payment_method_id = stripe_pm_id           # ← NEW
+                subscription.amount_paid             = amount_decimal
+                subscription.current_period_start    = timezone.now()
+                subscription.current_period_end      = _period_end_from_cycle(subscription.billing_cycle)
                 subscription.save(update_fields=[
                     "status",
-                    "stripe_sub_id",
+                    "stripe_last_intent_id",
+                    "stripe_customer_id",        # ← NEW
+                    "stripe_payment_method_id",  # ← NEW
                     "amount_paid",
                     "current_period_start",
                     "current_period_end",
@@ -392,40 +385,29 @@ class VendorSubscriptionViewSet(GenericViewSet):
         except stripe.error.CardError as exc:
             logger.warning(
                 "VendorSubscriptionViewSet.pay — card error | vendor=%s | error=%s",
-                vendor.email,
-                str(exc),
+                vendor.email, str(exc),
             )
             return Response(
-                {
-                    "success": False,
-                    "message": exc.user_message or "Card payment failed.",
-                },
+                {"success": False, "message": exc.user_message or "Card payment failed."},
                 status=status.HTTP_402_PAYMENT_REQUIRED,
             )
-
         except Exception as exc:
             logger.exception(
                 "VendorSubscriptionViewSet.pay — unexpected error | vendor=%s | error=%s",
-                vendor.email,
-                str(exc),
+                vendor.email, str(exc),
             )
             return Response(
-                {
-                    "success": False,
-                    "message": "Payment processing failed. Please try again.",
-                },
+                {"success": False, "message": "Payment processing failed. Please try again."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-        # ── Notify and queue confirmation email ──
         _notify_vendor(
             vendor            = vendor,
             notification_type = Notification.NotificationType.SUBSCRIPTION_ACTIVATED,
             title             = f"{subscription.plan.get_name_display()} plan activated",
             message           = (
                 f"Your {subscription.plan.get_name_display()} plan is now active. "
-                f"Next billing date: "
-                f"{subscription.current_period_end.strftime('%d %b %Y')}."
+                f"Next billing date: {subscription.current_period_end.strftime('%d %b %Y')}."
             ),
             action_url = "/dashboard",
         )
@@ -436,11 +418,8 @@ class VendorSubscriptionViewSet(GenericViewSet):
         return Response(
             {
                 "success": True,
-                "message": (
-                    f"{subscription.plan.get_name_display()} plan activated. "
-                    "Welcome to StockSense!"
-                ),
-                "data": ActiveSubscriptionSerializer(subscription).data,
+                "message": f"{subscription.plan.get_name_display()} plan activated. Welcome to StockSense!",
+                "data":    ActiveSubscriptionSerializer(subscription).data,
             },
             status=status.HTTP_200_OK,
         )
@@ -480,7 +459,7 @@ class VendorSubscriptionViewSet(GenericViewSet):
         stripe_pm_id  = serializer.validated_data["stripe_payment_method_id"]
 
         # ── Guard: new plan must be higher ──
-        if new_plan.monthly_price_ngn <= subscription.plan.monthly_price_ngn:
+        if new_plan.monthly_price_gbp <= subscription.plan.monthly_price_gbp:
             return Response(
                 {
                     "success": False,
@@ -503,11 +482,11 @@ class VendorSubscriptionViewSet(GenericViewSet):
 
         # ── Calculate prorated charge ──
         if billing_cycle == VendorSubscription.BillingCycle.YEARLY:
-            new_price = new_plan.yearly_price_ngn
-            cur_price = subscription.plan.yearly_price_ngn
+            new_price = new_plan.yearly_price_gbp
+            cur_price = subscription.plan.yearly_price_gbp
         else:
-            new_price = new_plan.monthly_price_ngn
-            cur_price = subscription.plan.monthly_price_ngn
+            new_price = new_plan.monthly_price_gbp
+            cur_price = subscription.plan.monthly_price_gbp
 
         charge_now = _calculate_prorated_amount(
             current_plan_price = cur_price,
@@ -517,7 +496,7 @@ class VendorSubscriptionViewSet(GenericViewSet):
         )
 
         logger.info(
-            "VendorSubscriptionViewSet.upgrade — prorated charge=₦%s | vendor=%s",
+            "VendorSubscriptionViewSet.upgrade — prorated charge=£%s | vendor=%s",
             charge_now,
             vendor.email,
         )
@@ -529,12 +508,12 @@ class VendorSubscriptionViewSet(GenericViewSet):
 
             stripe.api_key = settings.STRIPE_SECRET_KEY
 
-            amount_kobo = int(charge_now * 100)
+            amount_pence = int(charge_now * 100)
             intent_id   = ""
 
-            if amount_kobo > 0:
+            if amount_pence > 0:
                 intent = stripe.PaymentIntent.create(
-                    amount         = amount_kobo,
+                    amount         = amount_pence,
                     currency       = subscription.currency.lower(),
                     payment_method = stripe_pm_id,
                     confirm        = True,
@@ -543,9 +522,13 @@ class VendorSubscriptionViewSet(GenericViewSet):
                         "allow_redirects": "never",
                     },
                     metadata = {
-                        "vendor_id": str(vendor.id),
-                        "type":      "plan_upgrade",
-                        "new_plan":  new_plan.name,
+                        "vendor_id":       str(vendor.id),
+                        "type":            "plan_upgrade",
+                        "plan":            new_plan.name,
+                        "billing_cycle":   billing_cycle,
+                        "new_plan":        new_plan.name,
+                        # webhook uses subscription_id to look up the record
+                        "subscription_id": str(subscription.id),
                     },
                 )
 
@@ -568,17 +551,20 @@ class VendorSubscriptionViewSet(GenericViewSet):
                 subscription.cancelled_at = timezone.now()
                 subscription.save(update_fields=["status", "cancelled_at"])
 
-                # Create new active subscription
+                # Create new active subscription — carry over Stripe customer/PM
+                # so auto-renewal (process_subscription_renewal) can charge it.
                 new_subscription = VendorSubscription.objects.create(
-                    vendor               = vendor,
-                    plan                 = new_plan,
-                    billing_cycle        = billing_cycle,
-                    currency             = subscription.currency,
-                    status               = VendorSubscription.Status.ACTIVE,
-                    amount_paid          = charge_now,
-                    stripe_sub_id        = intent_id,
-                    current_period_start = timezone.now(),
-                    current_period_end   = _period_end_from_cycle(billing_cycle),
+                    vendor                   = vendor,
+                    plan                     = new_plan,
+                    billing_cycle            = billing_cycle,
+                    currency                 = subscription.currency,
+                    status                   = VendorSubscription.Status.ACTIVE,
+                    amount_paid              = charge_now,
+                    stripe_last_intent_id    = intent_id,
+                    stripe_customer_id       = subscription.stripe_customer_id,
+                    stripe_payment_method_id = subscription.stripe_payment_method_id,
+                    current_period_start     = timezone.now(),
+                    current_period_end       = _period_end_from_cycle(billing_cycle),
                 )
 
                 # Record the upgrade payment
@@ -635,7 +621,7 @@ class VendorSubscriptionViewSet(GenericViewSet):
                 "success": True,
                 "message": (
                     f"Plan upgraded to {new_plan.get_name_display()}. "
-                    f"Prorated charge: ₦{charge_now}."
+                    f"Prorated charge: £{charge_now}."
                 ),
                 "data": ActiveSubscriptionSerializer(new_subscription).data,
             },
@@ -672,7 +658,7 @@ class VendorSubscriptionViewSet(GenericViewSet):
         )
 
         # ── Guard: new plan must be lower ──
-        if new_plan.monthly_price_ngn >= subscription.plan.monthly_price_ngn:
+        if new_plan.monthly_price_gbp >= subscription.plan.monthly_price_gbp:
             return Response(
                 {
                     "success": False,
@@ -1248,7 +1234,7 @@ class AdminSubscriptionViewSet(
         # ── Date filters ──
         from_date = request.query_params.get("from_date")
         to_date   = request.query_params.get("to_date")
-        currency  = request.query_params.get("currency", "NGN")
+        currency  = request.query_params.get("currency", "GBP")
 
         qs = PaymentRecord.objects.filter(currency=currency)
 

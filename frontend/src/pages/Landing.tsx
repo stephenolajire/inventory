@@ -11,8 +11,8 @@ const Landing = () => {
       <HeroSection/>
       <FeaturesSection/>
       <HowItWorksSection/>
-      <TestimonialsSection/>
       <PricingSection/>
+      <TestimonialsSection/>
     </main>
   )
 }

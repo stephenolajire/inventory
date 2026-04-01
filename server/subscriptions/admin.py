@@ -9,11 +9,11 @@ from .models import SubscriptionPlan, VendorSubscription, PendingPlanChange, Pay
 class SubscriptionPlanAdmin(admin.ModelAdmin):
     list_display  = [
         "name", "product_limit",
-        "monthly_price_ngn", "yearly_price_ngn",
+        "monthly_price_gbp", "yearly_price_gbp",
         "has_analytics", "has_reports", "has_multi_branch", "is_active",
     ]
     list_filter   = ["is_active", "has_analytics", "has_reports"]
-    ordering      = ["monthly_price_ngn"]
+    ordering      = ["monthly_price_gbp"]
     readonly_fields = ["id", "created_at", "updated_at"]
     search_fields = ["name"]
 
@@ -29,7 +29,7 @@ class VendorSubscriptionAdmin(admin.ModelAdmin):
     search_fields = ["vendor__email"]
     ordering      = ["-created_at"]
     readonly_fields = [
-        "id", "stripe_sub_id",
+        "id",
         "current_period_start", "current_period_end",
         "cancelled_at", "created_at", "updated_at",
     ]
@@ -43,7 +43,7 @@ class VendorSubscriptionAdmin(admin.ModelAdmin):
             "fields": ("plan", "billing_cycle", "currency"),
         }),
         ("Status & Payment", {
-            "fields": ("status", "amount_paid", "stripe_sub_id"),
+            "fields": ("status", "amount_paid", "stripe_intent_id"),
         }),
         ("Period", {
             "fields": ("current_period_start", "current_period_end", "cancelled_at"),

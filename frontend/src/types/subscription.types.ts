@@ -26,8 +26,8 @@ export interface SubscriptionPlan {
   id: number;
   name: PlanName;
   product_limit: number;
-  monthly_price_ngn: string;
-  yearly_price_ngn: string;
+  monthly_price_gbp: string;
+  yearly_price_gbp: string;
   has_analytics: boolean;
   has_reports: boolean;
   has_multi_branch: boolean;
@@ -68,7 +68,7 @@ export interface ProcessPaymentRequest {
 }
 
 export interface UpgradePlanRequest {
-  new_plan: string;
+  new_plan: number;
   billing_cycle?: BillingCycle;
   stripe_payment_method_id: string;
 }

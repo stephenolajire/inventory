@@ -4,13 +4,15 @@ import os
 from pathlib import Path
 from datetime import timedelta
 from decouple import config, Csv
+import cloudinary
+
 
 # ── Base ──
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY    = config("SECRET_KEY")
 DEBUG         = config("DEBUG", default=True,  cast=bool)
-ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="*", cast=Csv())
+ALLOWED_HOSTS = ["*"]
 
 
 # ── Apps ──
@@ -227,6 +229,15 @@ CELERY_BEAT_SCHEDULER       = "django_celery_beat.schedulers:DatabaseScheduler"
 CELERY_TASK_TRACK_STARTED   = True
 CELERY_TASK_TIME_LIMIT      = 30 * 60
 CELERY_TASK_SOFT_TIME_LIMIT = 25 * 60
+
+from celery.schedules import crontab
+
+CELERY_BEAT_SCHEDULE = {
+    "daily-subscription-check": {
+        "task":     "subscriptions.daily_subscription_check",
+        "schedule": crontab(hour=1, minute=0),  # runs at 01:00 every day
+    },
+}
 
 
 # ── Cache ──

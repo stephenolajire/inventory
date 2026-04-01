@@ -22,11 +22,8 @@ class SubscriptionPlanListSerializer(serializers.ModelSerializer):
     class Meta:
         model  = SubscriptionPlan
         fields = [
-            "id",
-            "name",
             "product_limit",
-            "monthly_price_ngn",
-            "yearly_price_ngn",
+            "id", "name", "monthly_price_gbp", "yearly_price_gbp",
             "has_analytics",
             "has_reports",
             "has_multi_branch",
