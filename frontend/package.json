@@ -16,6 +16,7 @@
     "@tailwindcss/vite": "^4.2.2",
     "@tanstack/react-query": "^5.91.3",
     "@tanstack/react-query-devtools": "^5.91.3",
+    "@types/node": "^24.12.0",
     "axios": "^1.13.6",
     "lucide-react": "^0.577.0",
     "react": "^19.2.4",
@@ -27,11 +28,9 @@
     "recharts": "^3.8.0",
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "^4.2.2",
+    "typescript": "...",
     "zod": "^4.3.6",
-    "zustand": "^5.0.12",
-    "@types/node": "^24.12.0",
-    "vite": "^8.0.3",
-    "typescript": "..."
+    "zustand": "^5.0.12"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
