@@ -1,0 +1,16 @@
+**`templates/emails/subscriptions/plan_upgraded.txt`**
+```
+Hi {% if first_name %}{{ first_name }}{% else %}there{% endif %},
+
+Your plan has been successfully upgraded to {{ plan_name }}.
+You now have access to all the features included in this plan.
+
+Your new plan is active immediately and will renew automatically
+at the start of your next billing cycle.
+
+Manage your subscription:
+{{ subscription_url }}
+
+---
+StockSense — {{ platform_url }}
+Support: {{ support_email }}

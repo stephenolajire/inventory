@@ -50,7 +50,6 @@ export default function SubscriptionPage() {
   const sub = subscription.data?.data;
   const location = useLocation();
 
-  // Derive current page title from nav
   const currentNav = NAV_ITEMS.find((n) =>
     n.end ? location.pathname === n.to : location.pathname.startsWith(n.to),
   );
@@ -58,8 +57,9 @@ export default function SubscriptionPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* ── Page header ── */}
-      <div className="bg-white border-b border-slate-200 py-5">
-        <div className="max-w-7xl mx-auto">
+      <div className="bg-white border-b border-slate-200 py-4 sm:py-5">
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-xs text-slate-400 mb-1">
             <span>Settings</span>
             <ChevronRight size={12} />
@@ -73,58 +73,108 @@ export default function SubscriptionPage() {
               </>
             )}
           </div>
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-xl font-bold text-slate-900 tracking-tight">
+
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
                 Subscription & Billing
               </h1>
-              <p className="text-sm text-slate-500 mt-0.5">
+              <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
                 Manage your StockSense plan and billing settings
               </p>
             </div>
 
             {/* Current plan badge */}
             {isLoading ? (
-              <div className="flex items-center gap-2 text-slate-400 text-sm">
+              <div className="flex items-center gap-2 text-slate-400 text-sm shrink-0">
                 <Loader2 size={14} className="animate-spin" />
-                Loading...
+                <span className="hidden sm:inline">Loading...</span>
               </div>
             ) : sub ? (
-              <div className="flex items-center gap-2">
+              <span
+                className={`shrink-0 inline-flex items-center gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-bold tracking-wide uppercase ${
+                  sub.status === "active"
+                    ? "bg-green-50 text-green-700 border border-green-200"
+                    : sub.status === "past_due"
+                      ? "bg-amber-50 text-amber-700 border border-amber-200"
+                      : sub.status === "cancelled"
+                        ? "bg-red-50 text-red-700 border border-red-200"
+                        : "bg-slate-100 text-slate-600 border border-slate-200"
+                }`}
+              >
                 <span
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold tracking-wide uppercase ${
+                  className={`w-1.5 h-1.5 rounded-full shrink-0 ${
                     sub.status === "active"
-                      ? "bg-green-50 text-green-700 border border-green-200"
+                      ? "bg-green-500"
                       : sub.status === "past_due"
-                        ? "bg-amber-50 text-amber-700 border border-amber-200"
+                        ? "bg-amber-500"
                         : sub.status === "cancelled"
-                          ? "bg-red-50 text-red-700 border border-red-200"
-                          : "bg-slate-100 text-slate-600 border border-slate-200"
+                          ? "bg-red-500"
+                          : "bg-slate-400"
                   }`}
-                >
-                  <span
-                    className={`w-1.5 h-1.5 rounded-full ${
-                      sub.status === "active"
-                        ? "bg-green-500"
-                        : sub.status === "past_due"
-                          ? "bg-amber-500"
-                          : sub.status === "cancelled"
-                            ? "bg-red-500"
-                            : "bg-slate-400"
-                    }`}
-                  />
-                  {sub.plan_display_name} · {sub.status.replace("_", " ")}
+                />
+                <span className="hidden sm:inline">
+                  {sub.plan_display_name} ·{" "}
                 </span>
-              </div>
+                {sub.status.replace("_", " ")}
+              </span>
             ) : null}
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto py-8">
-        <div className="flex gap-8">
-          {/* ── Sidebar nav ── */}
-          <aside className="w-52 shrink-0">
+      {/* ── Mobile: horizontal scrollable tab bar ── */}
+      <div className="lg:hidden bg-white border-b border-slate-200">
+        <div
+          className="flex overflow-x-auto px-4"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
+          {NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            const isCancelRoute = item.label === "Cancel";
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                className={({ isActive }) =>
+                  `flex items-center gap-1.5 px-3 py-3 text-xs font-semibold whitespace-nowrap border-b-2 transition-colors shrink-0 ${
+                    isActive
+                      ? isCancelRoute
+                        ? "border-red-500 text-red-600"
+                        : "border-green-600 text-green-700"
+                      : isCancelRoute
+                        ? "border-transparent text-red-400 hover:text-red-500"
+                        : "border-transparent text-slate-500 hover:text-slate-700"
+                  }`
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    <Icon
+                      size={13}
+                      className={
+                        isActive
+                          ? isCancelRoute
+                            ? "text-red-500"
+                            : "text-green-600"
+                          : "text-slate-400"
+                      }
+                    />
+                    {item.label}
+                  </>
+                )}
+              </NavLink>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── Body ── */}
+      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div className="flex gap-6 xl:gap-8">
+          {/* ── Sidebar nav — desktop only ── */}
+          <aside className="hidden lg:block w-52 shrink-0">
             <nav className="space-y-0.5 sticky top-6">
               {NAV_ITEMS.map((item) => {
                 const Icon = item.icon;
@@ -169,7 +219,6 @@ export default function SubscriptionPage() {
               })}
             </nav>
 
-            {/* Help card */}
             <div className="mt-6 p-4 bg-white border border-slate-200 rounded-xl">
               <p className="text-xs font-bold text-slate-700 mb-1">
                 Need help?

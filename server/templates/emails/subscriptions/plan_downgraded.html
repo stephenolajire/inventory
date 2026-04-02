@@ -1,0 +1,21 @@
+{# templates/emails/subscriptions/plan_downgraded.html #}
+{% extends "emails/base.html" %}
+{% block content %}
+  <h1>Your plan change is scheduled</h1>
+  <p>Hi {% if first_name %}{{ first_name }}{% else %}there{% endif %},</p>
+  <p>
+    Your account is scheduled to move to the
+    <span class="bold">{{ plan_name }}</span> plan at the end of your
+    current billing period.
+  </p>
+  <p>
+    You'll keep access to all your current features until then.
+    After the change takes effect, your account will reflect the
+    features and limits of the {{ plan_name }} plan.
+  </p>
+  <p>
+    Changed your mind? You can cancel this scheduled change from
+    your subscription settings before the period ends.
+  </p>
+  <a href="{{ subscription_url }}" class="btn">Manage subscription →</a>
+{% endblock %}

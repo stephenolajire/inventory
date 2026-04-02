@@ -28,14 +28,12 @@ export default function DowngradePlanPage() {
 
   const sub = subscription.data?.data;
 
-  // Same pattern as UpgradePlanPage
   const allPlans =
     ((plans.data as any)?.data as SubscriptionPlan[] | undefined) ?? [];
 
   const currentPlanObj = allPlans.find((p) => p.name === sub?.plan_name);
   const currentPrice = Number(currentPlanObj?.monthly_price_gbp ?? 0);
 
-  // Only plans that cost LESS than the current plan
   const downgradablePlans = allPlans.filter(
     (p) => Number(p.monthly_price_gbp) < currentPrice,
   );
@@ -149,9 +147,9 @@ export default function DowngradePlanPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-6">
+      <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6">
         <div className="flex items-center gap-3 mb-1">
-          <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center shrink-0">
             <ArrowDownCircle size={16} className="text-amber-600" />
           </div>
           <h2 className="text-base font-bold text-slate-900">Downgrade plan</h2>
@@ -178,9 +176,9 @@ export default function DowngradePlanPage() {
       </div>
 
       {/* Step indicator */}
-      <div className="flex items-center gap-3 text-sm">
+      <div className="flex items-center gap-2 sm:gap-3 text-sm">
         <div
-          className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+          className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
             !confirming
               ? "bg-amber-600 text-white"
               : "bg-amber-100 text-amber-600"
@@ -189,15 +187,13 @@ export default function DowngradePlanPage() {
           1
         </div>
         <span
-          className={
-            !confirming ? "font-semibold text-slate-800" : "text-slate-400"
-          }
+          className={`text-xs sm:text-sm ${!confirming ? "font-semibold text-slate-800" : "text-slate-400"}`}
         >
           Choose a plan
         </span>
-        <ChevronRight size={14} className="text-slate-300" />
+        <ChevronRight size={14} className="text-slate-300 shrink-0" />
         <div
-          className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+          className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
             confirming
               ? "bg-amber-600 text-white"
               : "bg-slate-100 text-slate-400"
@@ -206,17 +202,15 @@ export default function DowngradePlanPage() {
           2
         </div>
         <span
-          className={
-            confirming ? "font-semibold text-slate-800" : "text-slate-400"
-          }
+          className={`text-xs sm:text-sm ${confirming ? "font-semibold text-slate-800" : "text-slate-400"}`}
         >
           Confirm downgrade
         </span>
       </div>
 
-      {/* ── STEP 1: Plan browser (dimmed but always visible in step 2) ── */}
+      {/* ── STEP 1: Plan browser ── */}
       <div className={confirming ? "opacity-60 pointer-events-none" : ""}>
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <p className="text-sm text-slate-500">
             {downgradablePlans.length} plan
             {downgradablePlans.length !== 1 ? "s" : ""} available to downgrade
@@ -225,22 +219,29 @@ export default function DowngradePlanPage() {
           <BillingCycleToggle value={billingCycle} onChange={setBillingCycle} />
         </div>
 
-        <PlansGrid
-          plans={downgradablePlans}
-          billingCycle={billingCycle}
-          currentPlan={sub}
-          onSelect={handleSelect}
-          isLoading={downgrade.isPending}
-          actionLabel={(plan) =>
-            selectedPlan?.id === plan.id ? "Selected ✓" : "Downgrade to this"
-          }
-          highlightIf={() => false}
-        />
+        {/*
+          Wrap PlansGrid in a container that forces single-column on mobile.
+          The `[&>*]:grid-cols-1` targets the grid inside PlansGrid and
+          overrides it to 1 column below the `sm` breakpoint.
+        */}
+        <div className="[&>div]:grid-cols-1 [&>div]:sm:grid-cols-2 [&>div]:lg:grid-cols-3">
+          <PlansGrid
+            plans={downgradablePlans}
+            billingCycle={billingCycle}
+            currentPlan={sub}
+            onSelect={handleSelect}
+            isLoading={downgrade.isPending}
+            actionLabel={(plan) =>
+              selectedPlan?.id === plan.id ? "Selected ✓" : "Downgrade to this"
+            }
+            highlightIf={() => false}
+          />
+        </div>
       </div>
 
-      {/* ── Continue CTA: shown after selecting a plan, before step 2 ── */}
+      {/* ── Continue CTA ── */}
       {selectedPlan && !confirming && (
-        <div className="flex items-center gap-4 p-4 bg-amber-50 border border-amber-200 rounded-2xl">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 bg-amber-50 border border-amber-200 rounded-2xl">
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-slate-800">
               {selectedPlan.name.charAt(0).toUpperCase() +
@@ -253,7 +254,7 @@ export default function DowngradePlanPage() {
           </div>
           <button
             onClick={handleContinue}
-            className="flex items-center gap-2 px-5 py-2.5 bg-amber-600 text-white text-sm font-bold rounded-lg hover:bg-amber-700 transition-colors shrink-0"
+            className="flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-2.5 bg-amber-600 text-white text-sm font-bold rounded-lg hover:bg-amber-700 transition-colors shrink-0"
           >
             Continue
             <ChevronRight size={14} />
@@ -263,7 +264,7 @@ export default function DowngradePlanPage() {
 
       {/* ── STEP 2: Confirm ── */}
       {confirming && selectedPlan && (
-        <div className="bg-white border border-amber-200 rounded-2xl p-6 shadow-sm shadow-amber-50 space-y-5">
+        <div className="bg-white border border-amber-200 rounded-2xl p-4 sm:p-6 shadow-sm shadow-amber-50 space-y-5">
           {/* Back + title */}
           <div className="flex items-center gap-3">
             <button
@@ -323,11 +324,11 @@ export default function DowngradePlanPage() {
           </label>
 
           {/* Actions */}
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={handleDowngrade}
               disabled={!confirmed || downgrade.isPending}
-              className="flex items-center gap-2 px-5 py-2.5 bg-amber-600 text-white text-sm font-bold rounded-lg hover:bg-amber-700 disabled:opacity-60 transition-colors"
+              className="flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-2.5 bg-amber-600 text-white text-sm font-bold rounded-lg hover:bg-amber-700 disabled:opacity-60 transition-colors"
             >
               {downgrade.isPending ? (
                 <Loader2 size={14} className="animate-spin" />
@@ -338,7 +339,7 @@ export default function DowngradePlanPage() {
             </button>
             <button
               onClick={handleBack}
-              className="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 text-sm font-bold rounded-lg hover:bg-slate-50 transition-colors"
+              className="w-full sm:w-auto px-5 py-2.5 bg-white border border-slate-200 text-slate-700 text-sm font-bold rounded-lg hover:bg-slate-50 transition-colors"
             >
               Cancel
             </button>

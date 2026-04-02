@@ -40,7 +40,7 @@ import SubscriptionPage from "./pages/vendor/pages/SubscriptionPage";
 import OverviewSection from "./pages/vendor/component/subscription/OverviewSection";
 import ActivatePlanPage from "./pages/vendor/pages/ActivatePlanPage";
 import UpgradePlanPage from "./pages/vendor/pages/UpgradePlanPage";
-import DowngradePlanPage from "./pages/vendor/pages/DowngradePlanPAge";
+import DowngradePlanPage from "./pages/vendor/pages/DowngradePlanPage";
 import CancelSubscriptionPage from "./pages/vendor/pages/CancelSubscriptionPage";
 
 function App() {

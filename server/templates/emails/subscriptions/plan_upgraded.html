@@ -1,0 +1,16 @@
+{# templates/emails/subscriptions/plan_upgraded.html #}
+{% extends "emails/base.html" %}
+{% block content %}
+  <h1>You're now on the {{ plan_name }} plan 🎉</h1>
+  <p>Hi {% if first_name %}{{ first_name }}{% else %}there{% endif %},</p>
+  <p>
+    Your plan has been successfully upgraded to
+    <span class="bold">{{ plan_name }}</span>.
+    You now have access to all the features included in this plan.
+  </p>
+  <p>
+    Your new plan is active immediately and will renew automatically
+    at the start of your next billing cycle.
+  </p>
+  <a href="{{ subscription_url }}" class="btn">View subscription →</a>
+{% endblock %}
