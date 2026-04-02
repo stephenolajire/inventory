@@ -1,6 +1,6 @@
 // src/pages/vendor/reports/components/ReportsHeader.tsx
 
-import { FileText, Plus, RefreshCw } from "lucide-react";
+import { Plus, RefreshCw } from "lucide-react";
 
 interface ReportsHeaderProps {
   totalCount: number;

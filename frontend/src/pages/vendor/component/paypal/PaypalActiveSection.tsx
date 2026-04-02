@@ -130,7 +130,7 @@ function PlanCard({
     cls: "badge-muted",
   };
   const price =
-    cycle === "yearly" ? plan.yearly_price_ngn : plan.monthly_price_ngn;
+    cycle === "yearly" ? plan.yearly_price_gbp : plan.monthly_price_gbp;
   const isPro = plan.name === "pro";
 
   return (
@@ -328,13 +328,13 @@ export function PayPalActivateSection({ paypal, subscription, onDone }: Props) {
     vendorSub &&
     parseFloat(
       billingCycle === "yearly"
-        ? selectedPlan.yearly_price_ngn
-        : selectedPlan.monthly_price_ngn,
+        ? selectedPlan.yearly_price_gbp
+        : selectedPlan.monthly_price_gbp,
     ) >
       parseFloat(
         billingCycle === "yearly"
-          ? (plans.find((p) => p.name === currentPlan)?.yearly_price_ngn ?? "0")
-          : (plans.find((p) => p.name === currentPlan)?.monthly_price_ngn ??
+          ? (plans.find((p) => p.name === currentPlan)?.yearly_price_gbp ?? "0")
+          : (plans.find((p) => p.name === currentPlan)?.monthly_price_gbp ??
               "0"),
       );
 
@@ -540,8 +540,8 @@ export function PayPalActivateSection({ paypal, subscription, onDone }: Props) {
                 }).format(
                   parseFloat(
                     billingCycle === "yearly"
-                      ? selectedPlan.yearly_price_ngn
-                      : selectedPlan.monthly_price_ngn,
+                      ? selectedPlan.yearly_price_gbp
+                      : selectedPlan.monthly_price_gbp,
                   ),
                 )}
               </p>

@@ -24,8 +24,8 @@ const BUSINESS_TYPES = [
 ] as const;
 
 const BUSINESS_TYPE_VALUES = BUSINESS_TYPES.map((t) => t.value) as [
-  string,
-  ...string[],
+  (typeof BUSINESS_TYPES)[number]["value"],
+  ...(typeof BUSINESS_TYPES)[number]["value"][],
 ];
 
 // ─────────────────────────────────────────────────────────────
@@ -34,7 +34,7 @@ const BUSINESS_TYPE_VALUES = BUSINESS_TYPES.map((t) => t.value) as [
 
 const businessSchema = z.object({
   business_name: z.string().optional(),
-  business_type: z.enum(BUSINESS_TYPE_VALUES as [string, ...string[]], {
+  business_type: z.enum(BUSINESS_TYPE_VALUES, {
     error: "Select a business type",
   }),
   business_description: z.string().optional(),
@@ -65,7 +65,7 @@ export function BusinessSection({ profile }: BusinessSectionProps) {
     resolver: zodResolver(businessSchema),
     defaultValues: {
       business_name: profile.business_name ?? "",
-      business_type: profile.business_type ?? "",
+      business_type: profile.business_type ?? undefined,
       business_description: profile.business_description ?? "",
       city_town: profile.city_town ?? "",
       street_address: profile.street_address ?? "",
