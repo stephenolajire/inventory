@@ -364,4 +364,4 @@ OTP_RESEND_WINDOW                 = 60
 VERIFICATION_TOKEN_EXPIRY_HOURS   = 24
 PASSWORD_RESET_TOKEN_EXPIRY_HOURS = 24
 LOW_STOCK_DEFAULT_THRESHOLD       = 5
-FRONTEND_BASE_URL                 = config("FRONTEND_BASE_URL", default="http://localhost:5173")
+FRONTEND_BASE_URL                 = config("FRONTEND_URL", default="http://localhost:5173")
