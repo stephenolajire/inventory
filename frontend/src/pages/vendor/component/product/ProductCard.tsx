@@ -1,6 +1,5 @@
 // src/pages/vendor/products/components/ProductCard.tsx
 
-// import { Link } from "react-router-dom";
 import {
   Package,
   MoreVertical,
@@ -10,9 +9,10 @@ import {
   ToggleRight,
   AlertTriangle,
   Scan,
+  Printer,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import { cn, formatCurrency} from "../../../../lib/utils";
+import { cn, formatCurrency } from "../../../../lib/utils";
 import type { ProductListItem } from "../../../../types";
 
 interface ProductCardProps {
@@ -22,6 +22,93 @@ interface ProductCardProps {
   onToggle: (id: string, active: boolean) => void;
   isDeleting: boolean;
   isToggling: boolean;
+}
+
+async function printBarcode(imageUrl: string, productName: string) {
+  let src = imageUrl;
+
+  try {
+    const res = await fetch(imageUrl);
+    const blob = await res.blob();
+    src = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    // fall back to the original URL if fetch fails
+  }
+
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"/>
+  <title>Barcode</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: 'Courier New', monospace;
+      background: #fff;
+      padding: 16px;
+    }
+    img {
+      max-width: 240px;
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    p {
+      margin-top: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #000;
+      text-align: center;
+      letter-spacing: 0.05em;
+    }
+    @media print {
+      body { min-height: unset; padding: 0; }
+      @page { size: auto; margin: 8mm; }
+    }
+  </style>
+</head>
+<body>
+  <img src="${src}" alt="Barcode" />
+  <p>${productName}</p>
+</body>
+</html>`;
+
+  const iframe = document.createElement("iframe");
+  iframe.style.cssText =
+    "position:fixed;top:-10000px;left:-10000px;width:1px;height:1px;border:none;visibility:hidden;";
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentDocument ?? iframe.contentWindow?.document;
+  if (!doc) {
+    iframe.remove();
+    return;
+  }
+
+  doc.open();
+  doc.write(html);
+  doc.close();
+
+  const win = iframe.contentWindow;
+  if (!win) {
+    iframe.remove();
+    return;
+  }
+
+  win.addEventListener("load", () => {
+    win.focus();
+    win.print();
+    setTimeout(() => iframe.remove(), 1500);
+  });
 }
 
 export function ProductCard({
@@ -35,7 +122,6 @@ export function ProductCard({
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Close menu on outside click
   useEffect(() => {
     function handler(e: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -140,6 +226,21 @@ export function ProductCard({
                   </>
                 )}
               </button>
+              {product.barcode_image && (
+                <>
+                  <div className="h-px bg-border mx-2" />
+                  <button
+                    onClick={() => {
+                      void printBarcode(product.barcode_image!, product.name);
+                      setMenuOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs font-medium text-text-secondary hover:bg-bg-subtle hover:text-text-primary transition-colors duration-150"
+                  >
+                    <Printer size={13} />
+                    Print barcode
+                  </button>
+                </>
+              )}
               <div className="h-px bg-border mx-2" />
               <button
                 onClick={() => {
@@ -183,7 +284,7 @@ export function ProductCard({
           </div>
         </div>
 
-        {/* Stock row */}
+        {/* Stock + barcode row */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <div
@@ -206,13 +307,28 @@ export function ProductCard({
             </span>
           </div>
 
-          {/* Barcode chip */}
-          <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-bg-subtle border border-border">
-            <Scan size={9} className="text-text-muted" />
-            <span className="text-[9px] font-mono text-text-muted truncate max-w-15">
-              {product.barcode}
-            </span>
-          </div>
+          {/* Barcode chip — clickable if barcode_image exists */}
+          {product.barcode_image ? (
+            <button
+              onClick={() =>
+                void printBarcode(product.barcode_image!, product.name)
+              }
+              title="Print barcode"
+              className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-bg-subtle border border-border hover:border-primary-muted hover:bg-primary-subtle hover:text-primary transition-all duration-150"
+            >
+              <Printer size={9} className="text-text-muted" />
+              <span className="text-[9px] font-mono text-text-muted truncate max-w-15">
+                {product.barcode}
+              </span>
+            </button>
+          ) : (
+            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-bg-subtle border border-border">
+              <Scan size={9} className="text-text-muted" />
+              <span className="text-[9px] font-mono text-text-muted truncate max-w-15">
+                {product.barcode}
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </div>
