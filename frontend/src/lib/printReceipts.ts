@@ -39,8 +39,8 @@ function fmtDate(iso: string): string {
   });
 }
 
-const DIVIDER = `<div class="divider">- - - - - - - - - - - - - - - - - - - - - -</div>`;
-const STAR_DIV = `<div class="divider star">* * * * * * * * * * * * * * * * * * * * * *</div>`;
+const DIVIDER = `<div class="divider">--------------------------------------------</div>`;
+const STAR_DIV = `<div class="divider star">============================================</div>`;
 
 const METHOD_LABEL: Record<string, string> = {
   cash: "Cash",
@@ -64,16 +64,11 @@ function buildHtml(
     vendor.stateName,
   ].filter(Boolean);
 
-  // ── Calculate pre-tax subtotal from individual line items ──
-  // unit_price × quantity gives the clean pre-tax line total.
-  // cart.subtotal may already include tax depending on the backend,
-  // so we derive it ourselves to guarantee correctness.
   const subtotal = cart.items.reduce(
     (sum, item: CartItem) => sum + parseFloat(item.unit_price) * item.quantity,
     0,
   );
 
-  // ── Total tax: sum of backend-calculated tax_amount per line item ──
   const totalTax = cart.items.reduce(
     (sum, item: CartItem) => sum + parseFloat(item.tax_amount ?? "0"),
     0,
@@ -83,9 +78,7 @@ function buildHtml(
   const itemRows = cart.items
     .map((item: CartItem) => {
       const hasTaxRate = parseFloat(item.tax_rate ?? "0") > 0;
-      // Pre-tax line total: unit price × quantity (no tax baked in)
       const lineSubtotal = parseFloat(item.unit_price) * item.quantity;
-      // Tax for this line: already calculated by backend
       const lineTax = parseFloat(item.tax_amount ?? "0");
 
       return `
@@ -121,17 +114,20 @@ function buildHtml(
 
     body {
       font-family: 'Share Tech Mono', 'Courier New', monospace;
-      font-size: 12px;
-      line-height: 1.5;
-      color: #111;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.6;
+      color: #000;
       background: #fff;
       width: 80mm;
       margin: 0 auto;
       padding: 8mm 5mm 12mm;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
 
     /* ── Header ─────────────────────────────────────── */
-    .header { text-align: center; margin-bottom: 5px; }
+    .header { text-align: center; margin-bottom: 6px; }
 
     .logo {
       display: block;
@@ -142,16 +138,18 @@ function buildHtml(
     }
 
     .shop-name {
-      font-size: 16px;
-      font-weight: 700;
+      font-size: 18px;
+      font-weight: 900;
       letter-spacing: 0.06em;
       text-transform: uppercase;
       line-height: 1.2;
+      color: #000;
     }
 
     .shop-addr {
-      font-size: 10px;
-      color: #555;
+      font-size: 12px;
+      font-weight: 700;
+      color: #000;
       margin-top: 3px;
       line-height: 1.6;
     }
@@ -159,32 +157,34 @@ function buildHtml(
     /* ── Dividers ────────────────────────────────────── */
     .divider {
       text-align: center;
-      font-size: 9px;
-      color: #aaa;
+      font-size: 11px;
+      font-weight: 900;
+      color: #000;
       letter-spacing: 0.02em;
       margin: 5px 0;
       overflow: hidden;
       white-space: nowrap;
     }
-    .divider.star { color: #888; }
 
     /* ── Title ───────────────────────────────────────── */
     .receipt-title {
       text-align: center;
-      font-size: 11px;
-      font-weight: 700;
+      font-size: 13px;
+      font-weight: 900;
       letter-spacing: 0.2em;
       text-transform: uppercase;
       margin: 4px 0;
+      color: #000;
     }
 
     /* ── Meta rows ───────────────────────────────────── */
     .meta-row {
       display: flex;
       justify-content: space-between;
-      font-size: 10px;
-      color: #555;
-      padding: 1px 0;
+      font-size: 12px;
+      font-weight: 700;
+      color: #000;
+      padding: 2px 0;
     }
     .meta-row span:last-child { text-align: right; }
 
@@ -196,85 +196,105 @@ function buildHtml(
     }
 
     thead th {
-      font-size: 10px;
-      font-weight: 700;
+      font-size: 12px;
+      font-weight: 900;
       text-transform: uppercase;
-      letter-spacing: 0.06em;
-      padding: 3px 0 3px;
-      border-bottom: 1px dashed #bbb;
+      letter-spacing: 0.04em;
+      padding: 4px 0;
+      border-top: 2px solid #000;
+      border-bottom: 2px solid #000;
+      color: #000;
     }
     th.col-name  { text-align: left; }
     th.col-qty,
     th.col-price,
     th.col-total { text-align: right; }
 
-    td { padding: 2px 0; }
+    td { padding: 3px 0; }
 
-    .col-name  { text-align: left;  max-width: 30mm; word-break: break-word; }
-    .col-qty   { text-align: right; padding-right: 5px; color: #666; }
-    .col-price { text-align: right; padding-right: 5px; color: #666; }
-    .col-total { text-align: right; font-weight: 600; }
+    .col-name  { text-align: left;  max-width: 30mm; word-break: break-word; color: #000; font-weight: 700; }
+    .col-qty   { text-align: right; padding-right: 5px; color: #000; font-weight: 700; }
+    .col-price { text-align: right; padding-right: 5px; color: #000; font-weight: 700; }
+    .col-total { text-align: right; font-weight: 900; color: #000; }
 
-    .tax-line td { font-size: 10px; color: #999; }
+    .tax-line td { font-size: 11px; color: #000; font-weight: 700; }
     .tax-note    { font-style: italic; }
 
     /* ── Totals ──────────────────────────────────────── */
-    .totals { margin: 3px 0; }
+    .totals { margin: 4px 0; }
 
     .total-row {
       display: flex;
       justify-content: space-between;
-      font-size: 11px;
-      color: #555;
-      padding: 1.5px 0;
-    }
-    .total-row.grand {
-      font-size: 15px;
+      font-size: 13px;
       font-weight: 700;
       color: #000;
-      padding: 4px 0 2px;
+      padding: 2px 0;
+    }
+    .total-row.grand {
+      font-size: 17px;
+      font-weight: 900;
+      color: #000;
+      padding: 5px 0 3px;
+      border-top: 2px solid #000;
+      border-bottom: 2px solid #000;
+      margin: 3px 0;
     }
 
     /* ── Payment block ───────────────────────────────── */
     .pay-row {
       display: flex;
       justify-content: space-between;
-      font-size: 11px;
-      color: #444;
-      padding: 1.5px 0;
-    }
-    .pay-row.change {
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 700;
       color: #000;
+      padding: 2px 0;
+    }
+    .pay-row.change {
+      font-size: 14px;
+      font-weight: 900;
+      color: #000;
+      border-top: 1px solid #000;
+      margin-top: 3px;
+      padding-top: 4px;
     }
 
     /* ── Footer ──────────────────────────────────────── */
-    .footer { text-align: center; margin-top: 8px; }
+    .footer { text-align: center; margin-top: 10px; }
 
     .thank-you {
-      font-size: 14px;
-      font-weight: 700;
+      font-size: 16px;
+      font-weight: 900;
       letter-spacing: 0.12em;
       text-transform: uppercase;
+      color: #000;
     }
 
     .ref-no {
-      font-size: 9px;
-      color: #aaa;
-      margin-top: 3px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #000;
+      margin-top: 4px;
     }
 
     .powered {
-      font-size: 8px;
-      color: #ccc;
+      font-size: 10px;
+      font-weight: 700;
+      color: #444;
       margin-top: 5px;
       letter-spacing: 0.04em;
     }
 
     /* ── Print rules ─────────────────────────────────── */
     @media print {
-      body { width: 80mm; padding: 0 3mm 8mm; }
+      body {
+        width: 80mm;
+        padding: 0 3mm 8mm;
+        font-weight: 700;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      * { color: #000 !important; }
       @page { size: 80mm auto; margin: 0; }
     }
   </style>
@@ -316,8 +336,8 @@ function buildHtml(
   <table>
     <thead>
       <tr>
-        <th class="col-name">Description</th>
-        <th class="col-qty">Qty</th>
+        <th class="col-name">Item</th>
+        <th class="col-qty">Qty/kg</th>
         <th class="col-price">Price</th>
         <th class="col-total">Total</th>
       </tr>
@@ -328,11 +348,6 @@ function buildHtml(
   ${STAR_DIV}
 
   <!-- ── Totals ── -->
-  <!--
-    subtotal  = sum of (unit_price × quantity) for all items — pre-tax
-    tax_total = sum of all per-item tax_amount values from the backend
-    total     = subtotal + totalTax (derived on frontend to avoid backend double-tax)
-  -->
   <div class="totals">
     <div class="total-row">
       <span>Subtotal</span>
@@ -344,7 +359,7 @@ function buildHtml(
         : ""
     }
     <div class="total-row grand">
-      <span>Total</span>
+      <span>TOTAL</span>
       <span>${fmt(subtotal + totalTax, currency)}</span>
     </div>
   </div>
@@ -391,7 +406,6 @@ export function printReceipt(
 ): void {
   const html = buildHtml(result, cart, vendor);
 
-  // Inject a hidden iframe, write the receipt HTML, and trigger print
   const iframe = document.createElement("iframe");
   iframe.style.cssText =
     "position:fixed;top:-10000px;left:-10000px;width:1px;height:1px;border:none;visibility:hidden;";
@@ -407,7 +421,6 @@ export function printReceipt(
   doc.write(html);
   doc.close();
 
-  // Wait for fonts/logo to load, then print
   const win = iframe.contentWindow;
   if (!win) {
     iframe.remove();
@@ -415,15 +428,11 @@ export function printReceipt(
   }
 
   win.addEventListener("load", () => {
-    // Inject a late <style> that wins over browser/system defaults.
-    // Chrome often ignores @page size in iframe docs unless forced this way.
     const style = win.document.createElement("style");
-    
     win.document.head.appendChild(style);
 
     win.focus();
     win.print();
-    // Clean up after the print dialog is dismissed
     setTimeout(() => iframe.remove(), 1500);
   });
 }

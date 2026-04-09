@@ -589,7 +589,7 @@ class ProductViewSet(
 
         if product.discount_price:
             message = (
-                f"Discount of ₦{product.discount_price} set on "
+                f"Discount of£{product.discount_price} set on "
                 f"'{product.name}' until {product.discount_expires_at:%d %b %Y}."
             )
         else:

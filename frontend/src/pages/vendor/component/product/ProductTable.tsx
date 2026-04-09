@@ -8,11 +8,7 @@ import {
   Barcode,
   Package,
 } from "lucide-react";
-import {
-  cn,
-  formatCurrency,
-  getStatusBadgeClass,
-} from "../../../../lib/utils";
+import { cn, formatCurrency, getStatusBadgeClass } from "../../../../lib/utils";
 import type { ProductListItem } from "../../../../types";
 
 interface ProductsTableProps {
@@ -23,6 +19,93 @@ interface ProductsTableProps {
   isDeleting: boolean;
   isToggling: boolean;
   isLoading: boolean;
+}
+
+async function printBarcode(imageUrl: string, productName: string) {
+  let src = imageUrl;
+
+  try {
+    const res = await fetch(imageUrl);
+    const blob = await res.blob();
+    src = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    // fall back to the original URL if fetch fails
+  }
+
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"/>
+  <title>Barcode – ${productName}</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: 'Courier New', monospace;
+      background: #fff;
+      padding: 16px;
+    }
+    img {
+      max-width: 240px;
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    p {
+      margin-top: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #000;
+      text-align: center;
+      letter-spacing: 0.05em;
+    }
+    @media print {
+      body { min-height: unset; padding: 0; }
+      @page { size: auto; margin: 8mm; }
+    }
+  </style>
+</head>
+<body>
+  <img src="${src}" alt="Barcode" />
+  <p>${productName}</p>
+</body>
+</html>`;
+
+  const iframe = document.createElement("iframe");
+  iframe.style.cssText =
+    "position:fixed;top:-10000px;left:-10000px;width:1px;height:1px;border:none;visibility:hidden;";
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentDocument ?? iframe.contentWindow?.document;
+  if (!doc) {
+    iframe.remove();
+    return;
+  }
+
+  doc.open();
+  doc.write(html);
+  doc.close();
+
+  const win = iframe.contentWindow;
+  if (!win) {
+    iframe.remove();
+    return;
+  }
+
+  win.addEventListener("load", () => {
+    win.focus();
+    win.print();
+    setTimeout(() => iframe.remove(), 1500);
+  });
 }
 
 function SkeletonRow() {
@@ -92,7 +175,7 @@ export function ProductsTable({
               : products.map((product) => {
                   const isLowStock = product.is_low_stock;
                   const hasDiscount =
-                    parseFloat(product.effective_price) 
+                    parseFloat(product.effective_price) <
                     parseFloat(product.selling_price);
                   const isProcessing =
                     product.processing_status === "processing";
@@ -192,16 +275,18 @@ export function ProductsTable({
                             {product.barcode ?? "—"}
                           </span>
                           {product.barcode_image ? (
-                            <a
-                              href={product.barcode_image}
-                              download
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              title="Download barcode"
+                            <button
+                              onClick={() =>
+                                void printBarcode(
+                                  product.barcode_image!,
+                                  product.name,
+                                )
+                              }
+                              title="Print barcode"
                               className="w-6 h-6 rounded-md border border-border flex items-center justify-center text-text-muted hover:text-primary hover:border-primary-muted hover:bg-primary-subtle transition-all duration-150 shrink-0"
                             >
                               <Barcode size={12} />
-                            </a>
+                            </button>
                           ) : (
                             <span
                               title="Barcode not ready yet"

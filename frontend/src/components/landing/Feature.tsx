@@ -60,11 +60,11 @@ function StorekeeperVisual() {
             <div>
               <p className="text-xs font-bold text-slate-800">{item.name}</p>
               <p className="text-[10px] text-slate-400">
-                ₦{item.price.toLocaleString()} x {item.qty}
+                £{item.price.toLocaleString()} x {item.qty}
               </p>
             </div>
             <p className="text-sm font-black text-slate-900">
-              ₦{(item.price * item.qty).toLocaleString()}
+              £{(item.price * item.qty).toLocaleString()}
             </p>
           </div>
         ))}

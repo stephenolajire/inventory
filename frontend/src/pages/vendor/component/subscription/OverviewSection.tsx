@@ -260,7 +260,7 @@ export default function OverviewSection() {
               <RefreshCw size={11} /> Last payment
             </p>
             <p className="text-sm font-bold text-slate-800">
-              ₦{Number(sub.amount_paid).toLocaleString("en-NG")}
+              £{Number(sub.amount_paid).toLocaleString("en-NG")}
             </p>
             <p className="text-xs text-slate-400">{sub.currency}</p>
           </div>

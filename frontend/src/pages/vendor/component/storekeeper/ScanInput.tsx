@@ -25,56 +25,67 @@ export function ScanInput({
 
   const barcodeRef = useRef<HTMLInputElement>(null);
   const qtyRef = useRef<HTMLInputElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Auto-focus barcode input when cart becomes active
   useEffect(() => {
     if (!disabled) barcodeRef.current?.focus();
   }, [disabled]);
 
-  // When weighed mode toggles on, focus the qty field first
   useEffect(() => {
     if (isWeighed) qtyRef.current?.focus();
     else barcodeRef.current?.focus();
   }, [isWeighed]);
 
-  function canSubmit() {
-    if (!barcode.trim()) return false;
+  function canSubmit(barcodeVal: string, measuredQtyVal: string) {
+    if (!barcodeVal.trim()) return false;
     if (isWeighed) {
-      const n = parseFloat(measuredQty);
+      const n = parseFloat(measuredQtyVal);
       return !isNaN(n) && n > 0;
     }
     return true;
   }
 
-  function fire() {
-    if (!canSubmit()) return;
+  function fire(barcodeVal: string) {
+    if (!canSubmit(barcodeVal, measuredQty)) return;
     const qty = isWeighed ? parseFloat(measuredQty) : undefined;
-    onScan(barcode.trim(), qty);
+    onScan(barcodeVal.trim(), qty);
     setBarcode("");
     setMeasuredQty("");
-    // Keep isWeighed on — cashier likely scanning more weighed items
     barcodeRef.current?.focus();
   }
 
+  function handleBarcodeChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const val = e.target.value;
+    setBarcode(val);
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    if (val.trim()) {
+      debounceRef.current = setTimeout(() => {
+        fire(val);
+      }, 300);
+    }
+  }
+
   function handleBarcodeKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter") fire();
+    if (e.key === "Enter") {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      fire(barcode);
+    }
   }
 
   function handleQtyKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter") {
-      // Move focus to barcode so cashier can scan
-      barcodeRef.current?.focus();
-    }
+    if (e.key === "Enter") barcodeRef.current?.focus();
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    fire();
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    fire(barcode);
   }
 
   return (
     <div className="space-y-2">
-      {/* Scan success flash banner */}
       <div
         className={cn(
           "overflow-hidden transition-all duration-300",
@@ -89,7 +100,6 @@ export function ScanInput({
         </div>
       </div>
 
-      {/* Failed weighed scan banner — only shown when backend returns an error */}
       <div
         className={cn(
           "overflow-hidden transition-all duration-300",
@@ -106,7 +116,6 @@ export function ScanInput({
         </div>
       </div>
 
-      {/* Weighed-item toggle */}
       <div className="flex items-center justify-between">
         <span className="text-xs text-text-muted">
           {isWeighed
@@ -130,9 +139,7 @@ export function ScanInput({
         </button>
       </div>
 
-      {/* Form */}
       <form onSubmit={handleSubmit} className="flex gap-2">
-        {/* Quantity input — only visible in weighed mode */}
         {isWeighed && (
           <div className="relative w-28 shrink-0">
             <input
@@ -153,7 +160,6 @@ export function ScanInput({
           </div>
         )}
 
-        {/* Barcode input */}
         <div className="relative flex-1">
           <Scan
             size={16}
@@ -166,7 +172,7 @@ export function ScanInput({
             ref={barcodeRef}
             type="text"
             value={barcode}
-            onChange={(e) => setBarcode(e.target.value)}
+            onChange={handleBarcodeChange}
             onKeyDown={handleBarcodeKeyDown}
             placeholder={
               disabled ? "Select or open a cart first" : "Scan barcode..."
@@ -183,6 +189,7 @@ export function ScanInput({
             <button
               type="button"
               onClick={() => {
+                if (debounceRef.current) clearTimeout(debounceRef.current);
                 setBarcode("");
                 barcodeRef.current?.focus();
               }}

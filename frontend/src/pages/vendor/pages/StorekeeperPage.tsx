@@ -339,7 +339,7 @@ export default function StorekeeperPage() {
               "
             >
               {activeCart && cartItems.length > 0
-                ? `Pay · ${new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN" }).format(parseFloat(activeCart.total_amount))}`
+                ? `Pay · ${new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(parseFloat(activeCart.total_amount))}`
                 : "Scan items to checkout"}
             </button>
           </div>
