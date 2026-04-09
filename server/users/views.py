@@ -294,7 +294,7 @@ class LoginView(APIView):
                         "status", "current_period_start", "current_period_end"
                     ])
                 else:
-                    redirect_to = "/subscription/activate"
+                    redirect_to = "/dashboard/subscription/activate"
 
         payload = {
             "success": True,

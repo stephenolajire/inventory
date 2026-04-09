@@ -1,6 +1,4 @@
-// src/pages/auth/VerifyEmailPage.tsx
-
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { ROUTES } from "../../constants/routes";
 import {
@@ -18,10 +16,6 @@ import {
   RefreshCw,
 } from "lucide-react";
 
-// ─────────────────────────────────────────────────────────────
-// States
-// ─────────────────────────────────────────────────────────────
-
 function LoadingState() {
   return (
     <div className="flex flex-col items-center text-center">
@@ -32,7 +26,6 @@ function LoadingState() {
           <MailOpen size={28} className="text-primary" />
         </div>
       </div>
-
       <h1 className="font-heading font-extrabold text-2xl text-text-primary mb-2">
         Verifying your email
       </h1>
@@ -52,7 +45,6 @@ function SuccessState() {
           <CheckCircle2 size={36} className="text-success" />
         </div>
       </div>
-
       <h1 className="font-heading font-extrabold text-2xl text-text-primary mb-2">
         Email verified!
       </h1>
@@ -60,7 +52,6 @@ function SuccessState() {
         Your email has been confirmed. You can now log in to your StockSense
         account.
       </p>
-
       <Link to={ROUTES.LOGIN} className="btn btn-primary btn-md w-full">
         Go to login
         <ArrowRight size={15} />
@@ -82,17 +73,11 @@ function ErrorState({
   email: string | null;
   resendVerification: ReturnType<typeof useResendVerification>;
 }) {
-  function handleResend() {
-    if (!email) return;
-    resendVerification.mutate({ email });
-  }
-
   return (
     <div className="flex flex-col items-center text-center">
       <div className="w-20 h-20 rounded-full bg-error/10 border-2 border-error flex items-center justify-center mb-7">
         <XCircle size={36} className="text-error" />
       </div>
-
       <h1 className="font-heading font-extrabold text-2xl text-text-primary mb-2">
         Verification failed
       </h1>
@@ -102,7 +87,6 @@ function ErrorState({
       <p className="text-xs text-text-muted max-w-xs leading-relaxed mb-8">
         The link may have expired or already been used. Request a new one below.
       </p>
-
       <div className="w-full space-y-3">
         <button
           type="button"
@@ -122,11 +106,10 @@ function ErrorState({
             </>
           )}
         </button>
-
         {email && (
           <button
             type="button"
-            onClick={handleResend}
+            onClick={() => resendVerification.mutate({ email })}
             disabled={
               resendVerification.isPending || resendVerification.isSuccess
             }
@@ -150,7 +133,6 @@ function ErrorState({
             )}
           </button>
         )}
-
         <Link
           to={ROUTES.LOGIN}
           className="btn btn-ghost btn-md w-full text-text-muted"
@@ -168,7 +150,6 @@ function MissingTokenState() {
       <div className="w-20 h-20 rounded-full bg-warning/10 border-2 border-warning flex items-center justify-center mb-7">
         <XCircle size={36} className="text-warning" />
       </div>
-
       <h1 className="font-heading font-extrabold text-2xl text-text-primary mb-2">
         Invalid link
       </h1>
@@ -176,7 +157,6 @@ function MissingTokenState() {
         This verification link is missing a token. Please use the exact link
         from your email, or request a new one.
       </p>
-
       <Link to={ROUTES.LOGIN} className="btn btn-surface btn-md w-full">
         Back to login
         <ArrowRight size={15} />
@@ -185,51 +165,53 @@ function MissingTokenState() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Main page
-// ─────────────────────────────────────────────────────────────
+type VerifyState =
+  | { status: "pending" }
+  | { status: "success" }
+  | { status: "error"; message: string };
 
 export default function VerifyEmailPage() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
   const email = searchParams.get("email");
 
-  // Captured error message — covers both real HTTP errors (isError)
-  // and soft failures where apiPost resolves with success: false
-  const errorMessage = useRef<string | null>(null);
-  // True when server responded with success: false (2xx but logical failure)
-  const hasFailed = useRef(false);
+  const [verifyState, setVerifyState] = useState<VerifyState>({
+    status: "pending",
+  });
+  const hasMutated = useRef(false);
+
+  const resendVerification = useResendVerification();
 
   const verifyEmail = useVerifyEmail({
     onSuccess: (res) => {
       if (!res.success) {
-        // apiPost resolved but server indicated failure — treat as error
-        errorMessage.current = res.message ?? "Verification failed.";
-        hasFailed.current = true;
+        setVerifyState({
+          status: "error",
+          message: res.message ?? "Verification failed.",
+        });
+      } else {
+        setVerifyState({ status: "success" });
       }
-      // If res.success === true, renderBody will show <SuccessState />
-      // via the isSuccess && !hasFailed check below
     },
     onError: (err) => {
-      errorMessage.current = getApiErrorMessage(err);
+      setVerifyState({
+        status: "error",
+        message: getApiErrorMessage(err),
+      });
     },
     retry: false,
   });
-
-  const resendVerification = useResendVerification();
-  const hasMutated = useRef(false);
 
   useEffect(() => {
     if (!token || hasMutated.current) return;
     hasMutated.current = true;
     verifyEmail.mutate({ token });
-  }, [token]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [token]);
 
   function retry() {
     if (!token) return;
     hasMutated.current = false;
-    hasFailed.current = false;
-    errorMessage.current = null;
+    setVerifyState({ status: "pending" });
     verifyEmail.reset();
     setTimeout(() => {
       hasMutated.current = true;
@@ -240,11 +222,12 @@ export default function VerifyEmailPage() {
   const renderBody = () => {
     if (!token) return <MissingTokenState />;
 
-    // Soft failure: 2xx but success: false
-    if (hasFailed.current) {
+    if (verifyState.status === "success") return <SuccessState />;
+
+    if (verifyState.status === "error") {
       return (
         <ErrorState
-          message={errorMessage.current ?? "Verification failed."}
+          message={verifyState.message}
           onRetry={retry}
           isRetrying={verifyEmail.isPending}
           email={email}
@@ -253,31 +236,11 @@ export default function VerifyEmailPage() {
       );
     }
 
-    // Hard failure: axios threw (4xx/5xx)
-    if (verifyEmail.isError) {
-      return (
-        <ErrorState
-          message={
-            errorMessage.current ?? getApiErrorMessage(verifyEmail.error)
-          }
-          onRetry={retry}
-          isRetrying={verifyEmail.isPending}
-          email={email}
-          resendVerification={resendVerification}
-        />
-      );
-    }
-
-    // Genuine success
-    if (verifyEmail.isSuccess) return <SuccessState />;
-
-    // idle (before effect fires) + pending → spinner
     return <LoadingState />;
   };
 
   return (
     <div className="min-h-screen bg-bg-base flex flex-col">
-      {/* ── Top bar ── */}
       <header className="flex items-center justify-between px-6 py-5 border-b border-border">
         <Link to="/" className="inline-flex items-center gap-2 select-none">
           <div className="w-8 h-8 rounded-lg bg-green-600 flex items-center justify-center">
@@ -287,7 +250,6 @@ export default function VerifyEmailPage() {
             Stock<span className="text-primary">Sense</span>
           </span>
         </Link>
-
         <Link
           to={ROUTES.LOGIN}
           className="text-sm text-text-muted hover:text-text-primary transition-colors duration-150"
@@ -296,14 +258,12 @@ export default function VerifyEmailPage() {
         </Link>
       </header>
 
-      {/* ── Centered card ── */}
       <div className="flex-1 flex items-center justify-center px-4 py-16">
         <div className="w-full max-w-sm bg-bg-surface border border-border rounded-2xl shadow-sm p-8">
           {renderBody()}
         </div>
       </div>
 
-      {/* ── Footer ── */}
       <footer className="px-6 py-4 border-t border-border">
         <p className="text-xs text-center text-text-muted">
           © {new Date().getFullYear()} StockSense Technologies Ltd. · Made with
