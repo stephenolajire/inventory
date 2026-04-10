@@ -18,6 +18,8 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter
 
 from core.permissions import IsAdmin, IsApprovedVendor
 from notifications.models import Notification
+from activities.utils import log_activity
+from activities.models import Activity
 from scanners.models import Scanner
 from subscriptions.models import VendorSubscription
 
@@ -144,6 +146,19 @@ class VendorProfileViewSet(GenericViewSet):
             request.user.email,
         )
 
+        # ── Log activity ──
+        log_activity(
+            user=request.user,
+            action_type=Activity.ActionType.PROFILE_UPDATED,
+            description="Updated vendor profile",
+            content_object=profile,
+            metadata={
+                "business_name": profile.business_name,
+                "business_type": profile.business_type,
+            },
+            request=request,
+        )
+
         return Response(
             {
                 "success": True,
@@ -180,6 +195,15 @@ class VendorProfileViewSet(GenericViewSet):
         logger.info(
             "VendorProfileViewSet.upload_logo — updated | vendor=%s",
             request.user.email,
+        )
+
+        # ── Log activity ──
+        log_activity(
+            user=request.user,
+            action_type=Activity.ActionType.PROFILE_UPDATED,
+            description="Updated business logo",
+            content_object=profile,
+            request=request,
         )
 
         return Response(

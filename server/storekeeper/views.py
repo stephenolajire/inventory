@@ -21,6 +21,8 @@ from core.permissions import IsApprovedVendor
 from notifications.models import Notification
 from products.models import Product
 from sales.models import Sale
+from activities.utils import log_activity
+from activities.models import Activity
 
 from .models import Cart, CartItem
 from .serializers import (
@@ -705,6 +707,30 @@ class StorekeeperViewSet(
                     cart.id,
                     cart.total_amount,
                     vendor.email,
+                )
+
+                # ── Log sales activity ──
+                log_activity(
+                    user=vendor,
+                    action_type=Activity.ActionType.PAYMENT_PROCESSED,
+                    description=f"Processed payment: {len(items)} item(s), Total ₦{cart.total_amount}",
+                    content_object=cart,
+                    metadata={
+                        "payment_method": payment_method,
+                        "total_amount": str(cart.total_amount),
+                        "item_count": len(items),
+                        "items": [
+                            {
+                                "product_name": item.product_name,
+                                "quantity": str(item.quantity),
+                                "line_total": str(item.line_total),
+                            }
+                            for item in items
+                        ],
+                        "currency": cart.currency,
+                        "change_due": str(change_due) if change_due else None,
+                    },
+                    request=request,
                 )
 
         except Exception as exc:

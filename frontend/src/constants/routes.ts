@@ -43,4 +43,5 @@ export const ROUTES = {
   ADMIN_SETTINGS:"/admin/settings",
   ADMIN_PRODUCT: "/admin/products",
   ADMIN_VENDOR_ANALYTICS: "/admin/vendors/:id/analytics",
+  ADMIN_ACTIVITIES: "/admin/activities",
 } as const;

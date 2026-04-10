@@ -18,6 +18,8 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter
 
 from core.permissions import IsAdmin, IsApprovedVendor
 from notifications.models import Notification
+from activities.utils import log_activity
+from activities.models import Activity
 
 from .models import Category, Product
 from .serializers import (
@@ -362,6 +364,19 @@ class ProductViewSet(
         from products.tasks import process_new_product
         process_new_product.delay(str(product.id))
 
+        log_activity(
+            user=request.user,
+            action_type=Activity.ActionType.PRODUCT_UPLOADED,
+            description=f"Uploaded product: {product.name}",
+            content_object=product,
+            metadata={
+                "category": product.category.name if product.category else "N/A",
+                "price": str(product.selling_price),
+                "cost_price": str(product.cost_price),
+            },
+            request=request,
+        )
+
         return Response(
             {
                 "success": True,
@@ -415,6 +430,18 @@ class ProductViewSet(
             request.user.email,
         )
 
+        log_activity(
+            user=request.user,
+            action_type=Activity.ActionType.UPDATE,
+            description=f"Updated product: {product.name}",
+            content_object=product,
+            metadata={
+                "changes": list(serializer.validated_data.keys()),
+                "category": product.category.name if product.category else "N/A",
+            },
+            request=request,
+        )
+
         return Response(
             {
                 "success": True,
@@ -436,6 +463,18 @@ class ProductViewSet(
             "ProductViewSet.destroy — deactivated | product=%s | vendor=%s",
             product.id,
             request.user.email,
+        )
+
+        log_activity(
+            user=request.user,
+            action_type=Activity.ActionType.DELETE,
+            description=f"Deleted product: {product.name}",
+            content_object=product,
+            metadata={
+                "product_name": product.name,
+                "category": product.category.name if product.category else "N/A",
+            },
+            request=request,
         )
 
         _create_notification(
@@ -509,6 +548,15 @@ class ProductViewSet(
         product.is_active = True
         product.save(update_fields=["is_active"])
 
+        log_activity(
+            user=request.user,
+            action_type=Activity.ActionType.UPDATE,
+            description=f"Reactivated product: {product.name}",
+            content_object=product,
+            metadata={"product_name": product.name},
+            request=request,
+        )
+
         return Response(
             {
                 "success": True,
@@ -545,6 +593,19 @@ class ProductViewSet(
             old_qty,
             new_qty,
             request.user.email,
+        )
+
+        log_activity(
+            user=request.user,
+            action_type=Activity.ActionType.STOCK_UPDATED,
+            description=f"Updated stock for {product.name}: {old_qty} → {new_qty}",
+            content_object=product,
+            metadata={
+                "old_quantity": old_qty,
+                "new_quantity": new_qty,
+                "product_name": product.name,
+            },
+            request=request,
         )
 
         # ── Notify if newly low stock ──
@@ -592,13 +653,28 @@ class ProductViewSet(
                 f"Discount of£{product.discount_price} set on "
                 f"'{product.name}' until {product.discount_expires_at:%d %b %Y}."
             )
+            discount_description = f"Set discount of £{product.discount_price} on {product.name}"
         else:
             message = f"Discount removed from '{product.name}'."
+            discount_description = f"Removed discount from {product.name}"
 
         logger.info(
             "ProductViewSet.set_discount — updated | product=%s | vendor=%s",
             product.id,
             request.user.email,
+        )
+
+        log_activity(
+            user=request.user,
+            action_type=Activity.ActionType.UPDATE,
+            description=discount_description,
+            content_object=product,
+            metadata={
+                "discount_price": str(product.discount_price) if product.discount_price else None,
+                "discount_expires_at": product.discount_expires_at.isoformat() if product.discount_expires_at else None,
+                "product_name": product.name,
+            },
+            request=request,
         )
 
         return Response(
@@ -637,6 +713,18 @@ class ProductViewSet(
             "ProductViewSet.upload_image — updated | product=%s | vendor=%s",
             product.id,
             request.user.email,
+        )
+
+        log_activity(
+            user=request.user,
+            action_type=Activity.ActionType.UPDATE,
+            description=f"Uploaded image for product: {product.name}",
+            content_object=product,
+            metadata={
+                "product_name": product.name,
+                "image_updated": True,
+            },
+            request=request,
         )
 
         return Response(

@@ -17,6 +17,8 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter
 
 from core.permissions import IsAdmin, IsApprovedVendor
 from notifications.models import Notification
+from activities.utils import log_activity
+from activities.models import Activity
 
 from .models import SubscriptionPlan, VendorSubscription, PendingPlanChange
 from .serializers import (
@@ -415,6 +417,21 @@ class VendorSubscriptionViewSet(GenericViewSet):
         from subscriptions.tasks import send_payment_confirmation_email
         send_payment_confirmation_email.delay(str(vendor.id))
 
+        log_activity(
+            user=vendor,
+            action_type=Activity.ActionType.SUBSCRIPTION_CREATED,
+            description=f"Subscribed to {subscription.plan.get_name_display()} plan",
+            content_object=subscription,
+            metadata={
+                "plan_name": subscription.plan.name,
+                "billing_cycle": subscription.billing_cycle,
+                "amount_paid": str(subscription.amount_paid),
+                "currency": subscription.currency,
+                "period_end": subscription.current_period_end.isoformat(),
+            },
+            request=request,
+        )
+
         return Response(
             {
                 "success": True,
@@ -616,6 +633,21 @@ class VendorSubscriptionViewSet(GenericViewSet):
         from subscriptions.tasks import send_plan_change_email
         send_plan_change_email.delay(str(vendor.id), "upgraded", new_plan.name)
 
+        log_activity(
+            user=vendor,
+            action_type=Activity.ActionType.SUBSCRIPTION_UPGRADED,
+            description=f"Upgraded to {new_plan.get_name_display()} plan",
+            content_object=new_subscription,
+            metadata={
+                "old_plan": subscription.plan.name,
+                "new_plan": new_plan.name,
+                "prorated_charge": str(charge_now),
+                "billing_cycle": billing_cycle,
+                "currency": new_subscription.currency,
+            },
+            request=request,
+        )
+
         return Response(
             {
                 "success": True,
@@ -732,6 +764,20 @@ class VendorSubscriptionViewSet(GenericViewSet):
         from subscriptions.tasks import send_plan_change_email
         send_plan_change_email.delay(str(vendor.id), "downgraded", new_plan.name)
 
+        log_activity(
+            user=vendor,
+            action_type=Activity.ActionType.SUBSCRIPTION_DOWNGRADED,
+            description=f"Scheduled downgrade from {subscription.plan.get_name_display()} to {new_plan.get_name_display()}",
+            content_object=subscription,
+            metadata={
+                "current_plan": subscription.plan.name,
+                "new_plan": new_plan.name,
+                "effective_at": effective_at.isoformat(),
+                "billing_cycle": billing_cycle,
+            },
+            request=request,
+        )
+
         return Response(
             {
                 "success": True,
@@ -821,6 +867,18 @@ class VendorSubscriptionViewSet(GenericViewSet):
             "VendorSubscriptionViewSet.cancel — scheduled | vendor=%s | effective=%s",
             vendor.email,
             subscription.current_period_end,
+        )
+
+        log_activity(
+            user=vendor,
+            action_type=Activity.ActionType.SUBSCRIPTION_CANCELLED,
+            description=f"Cancelled {subscription.plan.get_name_display()} plan",
+            content_object=subscription,
+            metadata={
+                "plan_name": subscription.plan.name,
+                "cancellation_effective_at": subscription.current_period_end.isoformat(),
+            },
+            request=request,
         )
 
         _notify_vendor(

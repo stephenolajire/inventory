@@ -56,6 +56,7 @@ LOCAL_APPS = [
     "analytics",
     "reports",
     "notifications",
+    "activities",
     "geography",
     # "media",
     "emails",

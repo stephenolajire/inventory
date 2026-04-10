@@ -14,6 +14,8 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter
 from core.permissions import IsAdmin, IsApprovedVendor
 from notifications.models import Notification
 from subscriptions.models import VendorSubscription
+from activities.utils import log_activity
+from activities.models import Activity
 from django.http import FileResponse
 import os
 from django.conf import settings
@@ -255,6 +257,20 @@ class ReportViewSet(
             request.user.email,
         )
 
+        log_activity(
+            user=request.user,
+            action_type=Activity.ActionType.REPORT_GENERATED,
+            description=f"Generated {report.get_report_type_display()} report",
+            content_object=report,
+            metadata={
+                "report_type": report.report_type,
+                "period_start": report.period_start.isoformat(),
+                "period_end": report.period_end.isoformat(),
+                "status": report.status,
+            },
+            request=request,
+        )
+
         return Response(
             {
                 "success": True,
@@ -352,6 +368,20 @@ class ReportViewSet(
             )
 
         filename = os.path.basename(abs_path)
+
+        log_activity(
+            user=request.user,
+            action_type=Activity.ActionType.UPDATE,
+            description=f"Downloaded {report.get_report_type_display()} report",
+            content_object=report,
+            metadata={
+                "report_type": report.report_type,
+                "period_start": report.period_start.isoformat(),
+                "file_size_kb": report.file_size_kb,
+            },
+            request=request,
+        )
+
         return FileResponse(
             open(abs_path, "rb"),
             content_type="application/pdf",
@@ -388,6 +418,17 @@ class ReportViewSet(
             report_type,
             period_start,
             request.user.email,
+        )
+
+        log_activity(
+            user=request.user,
+            action_type=Activity.ActionType.DELETE,
+            description=f"Deleted {report_type} report",
+            metadata={
+                "report_type": report.report_type,
+                "period_start": str(period_start),
+            },
+            request=request,
         )
 
         return Response(
@@ -587,6 +628,20 @@ class AdminReportViewSet(
             report.id,
             vendor.email,
             request.user.email,
+        )
+
+        log_activity(
+            user=request.user,
+            action_type=Activity.ActionType.REPORT_GENERATED,
+            description=f"Generated {report.get_report_type_display()} report for {vendor.email}",
+            content_object=report,
+            metadata={
+                "report_type": report.report_type,
+                "period_start": report.period_start.isoformat(),
+                "period_end": report.period_end.isoformat(),
+                "generated_for_vendor": vendor.email,
+            },
+            request=request,
         )
 
         return Response(

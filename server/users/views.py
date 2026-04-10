@@ -15,6 +15,9 @@ from rest_framework import mixins
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 
+from activities.utils import log_activity
+from activities.models import Activity
+
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 
 from core.permissions import IsAdmin, IsApprovedVendor
@@ -272,6 +275,14 @@ class LoginView(APIView):
         user.last_login = timezone.now()
         user.save(update_fields=["last_login"])
 
+        # ── Log activity ──
+        log_activity(
+            user=user,
+            action_type=Activity.ActionType.LOGIN,
+            description="User logged in",
+            request=request,
+        )
+
         # ── Issue tokens ──
         tokens = _issue_tokens(user)
 
@@ -479,6 +490,13 @@ class ChangePasswordView(APIView):
 
         user.set_password(serializer.validated_data["new_password"])
         user.save(update_fields=["password"])
+        log_activity(
+            user=user,
+            action_type=Activity.ActionType.PASSWORD_CHANGED,
+            description="Changed password.",
+            request=request,
+        )
+
 
         return Response(
             {
@@ -568,6 +586,12 @@ class DeleteAccountView(APIView):
         user.status    = "suspended"
         user.email     = f"deleted_{user.id}@deleted.invalid"
         user.save(update_fields=["is_active", "status", "email"])
+        log_activity(
+            user=user,
+            action_type=Activity.ActionType.ACCOUNT_DELETED,
+            description="Deleted account.",
+            request=request,
+        )
 
         return Response(
             {"success": True, "message": "Your account has been deleted."},

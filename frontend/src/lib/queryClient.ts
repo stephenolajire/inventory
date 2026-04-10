@@ -190,6 +190,10 @@ export const QK = {
     failedReports: () => ["admin", "reports", "failed"] as const,
     notifications: () => ["admin", "notifications"] as const,
     notificationStats: () => ["admin", "notification-stats"] as const,
+    activities: (f?: object) => ["admin", "activities", f] as const,
+    activity: (id: string) => ["admin", "activity", id] as const,
+    activityStats: () => ["admin", "activities", "stats"] as const,
+    actionTypes: () => ["admin", "action-types"] as const,
     // Inside QK.admin:
     vendorAnalytics: (id: string) =>
       ["admin", "vendors", id, "analytics"] as const,

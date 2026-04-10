@@ -16,3 +16,4 @@ export * from "./report.types";
 export * from "./scanner.types";
 export * from "./geography.types";
 export * from "./otp.types";
+export * from "./activity.types";

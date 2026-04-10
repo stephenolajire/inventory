@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   Users,
   Settings,
+  Activity,
   LogOut,
   Zap,
   ChevronLeft,
@@ -83,11 +84,11 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "Platform",
     items: [
-      // {
-      //   label: "Analytics",
-      //   href: ROUTES.ADMIN_ANALYTICS,
-      //   icon: <BarChart2 size={18} />,
-      // },
+      {
+        label: "Activities",
+        href: ROUTES.ADMIN_ACTIVITIES,
+        icon: <Activity size={18} />,
+      },
       {
         label: "Reports",
         href: ROUTES.ADMIN_REPORTS,

@@ -42,6 +42,7 @@ import ActivatePlanPage from "./pages/vendor/pages/ActivatePlanPage";
 import UpgradePlanPage from "./pages/vendor/pages/UpgradePlanPage";
 import DowngradePlanPage from "./pages/vendor/pages/DowngradePlanPage";
 import CancelSubscriptionPage from "./pages/vendor/pages/CancelSubscriptionPage";
+import AdminActivitiesPage from "./pages/admin/pages/AdminActivitiesPage";
 
 function App() {
   return (
@@ -113,6 +114,7 @@ function App() {
               path={ROUTES.ADMIN_PRODUCT}
               element={<AdminProductsPage />}
             />
+            <Route path={ROUTES.ADMIN_ACTIVITIES} element={<AdminActivitiesPage />} />
             <Route path="products/:id/edit" element={<EditProductPage />} />
           </Route>
         </Routes>
